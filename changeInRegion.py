@@ -4,7 +4,7 @@ import random
 import shutil
 import cv2
 
-srcRoot = "/home/devin/Desktop/mnt/20171112/"
+srcRoot = "/media/devin/Elements1/tooltestdata/2/facehead/"
 targetFile = "dataLabel.txt"
 
 ration = 1.6
