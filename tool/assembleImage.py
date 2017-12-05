@@ -3,12 +3,10 @@ import sys
 import time
 import random
 import shutil
+print time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
 
 srcRoot = "/media/devin/Elements1/onlypalm_labelmergedata/Lab/"
 dstRoot = "/media/devin/Elements1/onlypalm_labelmergedata/LabIntegration/"
-
-print time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-
 if not os.path.exists(dstRoot):
     os.makedirs(dstRoot)
 

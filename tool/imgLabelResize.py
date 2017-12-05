@@ -2,17 +2,16 @@ import os
 import time
 import random
 import cv2
+print time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
 
 srcRoot = "/home/devin/Desktop/mnt/20171112/"
 dstRoot = "/home/devin/Desktop/mnt/20171112_256144/"
 dstRootLabels = "/home/devin/Desktop/mnt/20171112_256144Labels/"
 rowSize = 144
 colSize = 256
-
 index = 0
 downSample = 1
 allLines = []
-print time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
 
 if not os.path.exists(dstRoot):
     os.makedirs(dstRoot)
