@@ -5,8 +5,8 @@ import shutil
 import cv2
 print time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
 
-srcRoot = "/media/devin/Elements/headRestoreDeAnti/20170912/"
-targetFile = "new_dataLabel.txt"
+srcRoot = "/media/devin/Elements/head/20170824/"
+targetFile = "dataLabel.txt"
 ration = 1.6
 pre = time.strftime('%d%H%M', time.localtime())
 
@@ -23,7 +23,7 @@ if os.path.exists(srcRoot):
                 with open(os.path.join(rt, name), 'w') as f:
                     for line in oriList:
                         elements = line.split()
-                        if len(elements) > 0 and os.path.exists(os.path.join(rt, elements[0])):
+                        if len(elements) > 1 and os.path.exists(os.path.join(rt, elements[0])):
                             img = cv2.imread(os.path.join(rt, elements[0]), cv2.IMREAD_COLOR)
                             if img is None:
                                 continue

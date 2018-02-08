@@ -67,7 +67,7 @@ for folder in lastFolders:
             else:
                 continue
         for line in lineBuffer:
-            if 0 < len(line.split()):
+            if 1 < len(line.split()):
                 stringChip = line.split()[0]
                 line = line.replace(stringChip, renameDictionary[stringChip])
                 dstBuffer.append(line)
@@ -75,9 +75,9 @@ for folder in lastFolders:
                 continue
 
         folderEle = folder.split('/')
-        if 2 <= len(folderEle):
+        if 2 < len(folderEle):
             dstFile = folderEle[-2] + '_' + folderEle[-1] + ".txt"
-        elif 1 == len(folderEle):
+        elif 1 < len(folderEle):
             dstFile = folderEle[-1] + ".txt"
         else:
             continue

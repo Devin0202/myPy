@@ -37,7 +37,7 @@ if os.path.exists(srcRoot):
                 with open(newFile, 'w') as f:
                     for line in oriList:
                         elementsF = line.split()
-                        if len(elementsF) > 0 and os.path.exists(os.path.join(rt, elementsF[0])):
+                        if len(elementsF) > 1 and os.path.exists(os.path.join(rt, elementsF[0])):
                             img = cv2.imread(os.path.join(rt, elementsF[0]), cv2.IMREAD_COLOR)
                             if img is None:
                                 continue

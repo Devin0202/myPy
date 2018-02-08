@@ -17,7 +17,7 @@ if os.path.exists(srcRoot):
                 with open(newFile, 'w') as f:
                     for line in oriList:
                         elementsF = line.split()
-                        if len(elementsF) > 0 and os.path.exists(os.path.join(rt, elementsF[0])):
+                        if len(elementsF) > 1 and os.path.exists(os.path.join(rt, elementsF[0])):
                             newEle = [elementsF[0], str(int(elementsF[6]) + 1), elementsF[2], \
                                         elementsF[3], elementsF[4], elementsF[5]]
                             singleLine = ""

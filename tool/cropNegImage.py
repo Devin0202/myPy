@@ -36,9 +36,10 @@ if os.path.exists(srcRoot):
                 dstImg = img[(img.shape[0] - dstRow) / 2 : (img.shape[0] - dstRow) / 2 + dstRow, \
                                 (img.shape[1] - dstCol) / 2 : (img.shape[1] - dstCol) / 2 + dstCol]
                 cv2.imwrite(os.path.join(dstFolder, name), dstImg)
-                cnt += 1                
+                cnt += 1
 else:
     print("No Source!!!")
 
+print os.linesep
 print "Total images: " + str(cnt)
 print time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())

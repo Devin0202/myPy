@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""
+Convert NV21 to png
+"""
 import os
 import sys
 import time
@@ -9,8 +12,8 @@ print time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
 cols = 1280
 rows = 720
-srcRoot = "/home/devin/Desktop/03/"
-dstRoot = "/home/devin/Desktop/03Png/"
+srcRoot = "/media/devin/Elements/dy/20170907/"
+dstRoot = "/media/devin/Elements/dy/20170907Png/"
 suffix = ".dat"
 lenSuffix = len(suffix)
 fileBytes = cols * rows * 3 / 2

@@ -70,7 +70,7 @@ for (x, y) in zip(listMain, listSlave):
     wholeIndex = []
     for tmp in wholeList:
         sp = tmp.split()
-        if 0 < len(sp):
+        if 1 < len(sp):
             wholeIndex.append(sp[0])
     sortList = sorted(set(wholeIndex), key = wholeIndex.index)
 

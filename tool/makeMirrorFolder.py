@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+"""
+Copy same hierarchy from source folder to destination folder
+"""
 import os
 import sys
 import time

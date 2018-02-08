@@ -5,7 +5,7 @@ import struct
 print time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
 
 mapFile = "/home/devin/Desktop/mapXY.txt"
-srcRoot = "/media/devin/Elements/headRestoreDeAnti/20170912/"
+srcRoot = "/media/devin/Elements/dy/20170907Label/"
 targetFile = "dataLabel.txt"
 biasW = 150
 biasH = 150
@@ -57,7 +57,7 @@ for item in listMain:
             if 0 < len(elements):
                 srcImg = os.path.split(item)[0] + os.path.sep + elements[0]
                 # print srcImg
-                if os.path.exists(srcImg):
+                if not os.path.exists(srcImg):
                     ltX = int(elements[2])
                     ltY = int(elements[3])
                     rbX = int(elements[2]) + int(elements[4])

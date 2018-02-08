@@ -63,16 +63,3 @@ print(dt4Train.shape)
 
 lb4Train = MnistDataLoad(MnistDataRoute + TrainLabel)
 print(lb4Train[25555])
-
-
-
-
-
-
-
-
-
-
-
-
-
