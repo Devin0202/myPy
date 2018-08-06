@@ -27,9 +27,11 @@ else:
     print targetFile
     with open(targetFile, 'w') as fw:
         for rt, dirs, files in os.walk(srcRoot):
+            files.sort()
             for name in files:
                 if len(name) - sortLength == name.find(fileSort):
-                    fw.write(os.path.join(rt, name))
+                    # fw.write(os.path.join(rt, name))
+                    fw.write(name)
                     fw.write(os.linesep)
                 else:
                     continue
