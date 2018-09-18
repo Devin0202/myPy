@@ -6,8 +6,8 @@ import random
 from skimage import io, data, transform
 print time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
 
-srcRootList = ["/home/devin/Desktop/111"]
-dstRootList = ["/home/devin/Desktop/111Scaled"]
+srcRootList = ["/home/devin/Desktop/faceOri/yunnan/"]
+dstRootList = ["/home/devin/Desktop/faceOri/yunnanS/"]
 
 rowSize = 720
 colSize = 1280
@@ -45,9 +45,9 @@ else:
                                 #     print "Wrong shape: " \
                                 #     + str(img.shape[0]) + str(img.shape[1])
                                 #     continue
-                                dstImg = transform.resize(img, (rowSize, colSize))
-                                # dstImg = transform.resize(img, (img.shape[0] / 2, img.shape[1] / 2))
-                                # dstImg = transform.resize(img, (img.shape[0] / 2 * 2, img.shape[1] / 2 * 2))
+                                # dstImg = transform.resize(img, (rowSize, colSize))
+                                dstImg = transform.resize(img, (img.shape[0] / 2, img.shape[1] / 2))
+                                dstImg = transform.resize(img, (img.shape[0] / 2 * 2, img.shape[1] / 2 * 2))
                                 dst = absoluteRoute.replace(srcRoot, dstRoot)
                                 if not os.path.exists(os.path.split(dst)[0]):
                                     os.makedirs(os.path.split(dst)[0])

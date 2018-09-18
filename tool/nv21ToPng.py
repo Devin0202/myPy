@@ -8,13 +8,13 @@ import time
 import cv2
 import shutil
 import numpy as np
-print time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
 cols = 1280
 rows = 720
-srcRoot = "/media/devin/Elements/dy/20170907/"
-dstRoot = "/media/devin/Elements/dy/20170907Png/"
-suffix = ".dat"
+srcRoot = "/home/devin/Desktop/tmp/0830111052/"
+dstRoot = "/home/devin/Desktop/tmp/0830111052png/"
+suffix = ".nv21"
 lenSuffix = len(suffix)
 fileBytes = cols * rows * 3 / 2
 cvImgSaver = [int(cv2.IMWRITE_PNG_COMPRESSION), 3]
@@ -27,7 +27,7 @@ if os.path.exists(srcRoot):
                 with open(os.path.join(rt, name), 'r') as fr:
                     oriData = fr.read()
                     if not len(oriData) == fileBytes:
-                        print os.path.join(rt, name)
+                        print(os.path.join(rt, name))
                         continue
 
                 imgYuv = np.fromstring(oriData, dtype = np.uint8)
@@ -57,5 +57,5 @@ else:
     print("No Source!!!")
     sys.exit(0)
 
-print os.linesep
-print time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+print(os.linesep)
+print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
