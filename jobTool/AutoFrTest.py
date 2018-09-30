@@ -11,51 +11,65 @@ import subprocess
 print(sys.version)
 print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
 ### Defs region
+def preJob(pushThing, dstSuffix, dataDst, logDst, appObj):
+    cmd = "adb shell rm -rf " + logDst + "/*"
+    (status, output) = subprocess.getstatusoutput(cmd)
+
+    cmd = "adb shell rm -rf " + dataDst + "/*"
+    (status, output) = subprocess.getstatusoutput(cmd)
+
+    cmd = "adb push " + pushThing + " " + dataDst + "/" + dstSuffix
+    (status, output) = subprocess.getstatusoutput(cmd)
+
+    cmd = "adb shell input keyevent 224"
+    (status, output) = subprocess.getstatusoutput(cmd)
+    time.sleep(5)
+
+    cmd = "adb shell am start -n " + appObj
+    (status, output) = subprocess.getstatusoutput(cmd)
+    time.sleep(25)
+    return
+
+def postJob(logLocal, logRemote):
+    if not os.path.exists(logLocal):
+        os.makedirs(logLocal)
+
+    cmd = "adb pull " + logRemote + " " + logLocal
+    (status, output) = subprocess.getstatusoutput(cmd)
+    return
 
 ### Params region
-folderDoneList = \
-["0906152317", "0906112427", "0906112457", "0906112524", "0906112548", \
-"0906112611", "0906112639", "0906112726", "0906112749", "0906112818", \
-"0906112848", "0906152109", "0906152135", "0906152201", "0906152223", \
-"0906152252", "0906152343", "0906152407", "0906152517", "0906152549", \
-"0906152617", "0906152656", "0906152724", "0906152815", "0906152850", \
-"0906152922", "0906152953", "0906153200", "0906153242", "0906153304"]
-
+cLocalResults = "/home/devin/Desktop/TestResults/"
+cDataDst = "/sdcard/TestData"
+cLogDst = "/sdcard/TestLog"
+cAppObj = "com.megvii.test/com.facepp.demo.LoadingActivity"
+cAppID = "com.megvii.test"
 dataFolder = "/media/devin/OpenImage600/face3/"
 # objs = ["daiyi", "sunhaiyan"]
-objs = ["yanchangjian", "yukeke"]
+objs = ["yanchangjian", "guangming", "yukeke"]
+objs = ["yukeke"]
+folderDoneList = \
+["0907144957", "0907143308", "0907143458", "0907143527", "0907143608", \
+"0907143703", "0907143736", "0907143819", "0907143849", "0907143913", \
+"0907144102", "0907144151", "0907144239", "0907144325", "0907144409", \
+"0907144459", "0907144550", "0907144628", "0907144706", "0907145054", \
+"0907145152", "0907145242", "0907145316", "0907145353", "0907145423", \
+"0907145448", "0907145529"]
 
+### Job region
 for obj in objs:
     dataSet = dataFolder + obj + "/cameraData"
     for rt, dirs, files in os.walk(dataSet):
-        cnt = 0
         for name in dirs:
             if name in folderDoneList:
                 continue
-            cnt += 1
+
             pushOne = os.path.join(rt, name)
             print("Push: " + pushOne)
+            preJob(pushOne, name, cDataDst, cLogDst, cAppObj)
 
-            cmd = "adb shell rm -rf /sdcard/TestLog/*"
-            (status, output) = subprocess.getstatusoutput(cmd)
-
-            cmd = "adb shell rm -rf /sdcard/TestData/*"
-            (status, output) = subprocess.getstatusoutput(cmd)
-
-
-            cmd = "adb push " + pushOne + " /sdcard/TestData/" + name
-            (status, output) = subprocess.getstatusoutput(cmd)
-
-            cmd = "adb shell input keyevent 224"
-            (status, output) = subprocess.getstatusoutput(cmd)
-            time.sleep(5)
-
-            cmd = "adb shell am start -n \
-            com.megvii.test/com.facepp.demo.LoadingActivity"
-            (status, output) = subprocess.getstatusoutput(cmd)
-            time.sleep(25)
             while (1):
-                cmd = "adb shell ps|grep -E \"com.megvii.test\""
+                cmd = "adb shell ps|grep -E \"" + cAppID + "\""
                 (status, output) = subprocess.getstatusoutput(cmd)
                 # print(status)
                 # print(output)
@@ -68,22 +82,14 @@ for obj in objs:
                     (status, output) = subprocess.getstatusoutput(cmd)
                     time.sleep(30)
 
-            dst = "/home/devin/Desktop/TestResults/" + obj
-            if not os.path.exists(dst):
-                os.makedirs(dst)
-            dataSet = "/sdcard/TestLog"
-            cmd = "adb pull " + dataSet + " " + dst
-            (status, output) = subprocess.getstatusoutput(cmd)
-
+            postJob(cLocalResults + obj, cLogDst)
             folderDoneList.append(name)
             print("Folders Done~")
             for it in folderDoneList:
                 print("\"" + it + "\",", end = ' ')
-
             print()
             print(time.strftime('%H:%M:%S', time.localtime()))
-            print(obj + " " + str(len(folderDoneList)) + ": " + name \
-                + " done~")
+            print(obj + " " + str(len(folderDoneList)) + ": " + name + " done~")
     folderDoneList = []
 
 print(os.linesep)
