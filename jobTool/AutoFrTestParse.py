@@ -372,8 +372,8 @@ class CaseInfo:
             writeExcel0Add.append(str(tmp1F))
 
         if (0 == self.recgValidFrames):
-            writeExcel.append("0")
-            print("recgSuccessRate: 0")
+            writeExcel.append("NA")
+            print("recgSuccessRate: NA")
         else:
             tmp0F = round(self.recgSuccess / float(self.recgValidFrames), 2)
             writeExcel.append(str(tmp0F))
@@ -568,6 +568,7 @@ def writeCaseMap(mCaseDict, mInfoDict, mList, mWorkSheet):
         print(os.linesep)
 
 ### Params region
+### Job region
 xlsFileR = "/home/devin/Desktop/tmp/FrSet2018.xlsx"
 nameCaseDict = {}
 wb = load_workbook(filename = xlsFileR)

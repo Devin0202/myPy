@@ -18,8 +18,15 @@ print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
 
 ### Params region
 xlsFileR = "/home/devin/Desktop/TestResultXlsx/InterimData.xlsx"
+xlsFileW = "/home/devin/Desktop/TestResultXlsx/AllData.xlsx"
 indexSheet = "caseIndex"
-hint = ["3m", "侧", "普"]
+hint = ["2m", "正", "普"]
+needRowsInfo = ["视频片段编号", "检测", "识别正确", "识别有效率", "响应时间(ms)", \
+"5秒内正确识别率", "10秒内正确识别率", "15秒内正确识别率"]
+needRows = [1, 4, 21, 7, 20, 25, 26, 27]
+individuleStartRow = 29
+
+### Job region
 matchRows = []
 matchCases = []
 wr = load_workbook(filename = xlsFileR)
@@ -41,89 +48,80 @@ else:
     sys.exit(0)
 print(matchCases)
 
-xlsFileW = "/home/devin/Desktop/TestResultXlsx/AllData.xlsx"
 if os.path.isfile(xlsFileW):
     ww = load_workbook(filename = xlsFileW)
 else:
     ww = Workbook()
+
 newSheet = ""
 for it in hint:
     newSheet += it
+
 wws = ww.create_sheet(newSheet, 0)
-wws.column_dimensions[get_column_letter(1)].width = 31
+wws.column_dimensions[get_column_letter(1)].width = 21
 for i in range(2, 40):
     wws.column_dimensions[get_column_letter(i)].width = 15
-wws["A1"] = "视频片段编号"
-wws["A2"] = "视频片段总帧数"
-wws["A3"] = "测试所用帧数"
-wws["A4"] = "检测有效帧数"
-wws["A5"] = "识别次(帧)数"
-wws["A6"] = "有效识别次(帧)数"
-wws["A7"] = "最大单帧加载耗时(ms)"
-wws["A8"] = "最大单帧检测耗时(ms)"
-wws["A9"] = "最大识别(含无效识别)耗时(ms)"
-wws["A10"] = "最大解析耗时(ms)"
-wws["A11"] = "平均单帧加载耗时(ms)"
-wws["A12"] = "平均单帧检测耗时(ms)"
-wws["A13"] = "平均识别(含无效识别)耗时(ms)"
-wws["A14"] = "平均解析耗时(ms)"
-wws["A15"] = "主观耗时(ms):首识别首检测时差"
-wws["A16"] = "有效帧识别正确率"
-wws["A17"] = "退出等待耗时(ms)"
-wws["A18"] = "识别队列剩余"
-wws["A19"] = "识别结果全返回"
 
 for it in wr.sheetnames:
     if indexSheet == it:
         continue
     else:
+        totalCorrectCnt = None
         wrs = wr[it]
         for c in range(2, wrs.max_column + 1):
             if (wrs.cell(1, c).value) in matchCases:
                 writeRow = 1
                 writeCol = wws.max_column + 1
-                for sheetCell in list(wrs.columns)[c - 1]:
-                    wws.cell(writeRow, writeCol).value = sheetCell.value
+                for r in needRows:
+                    wws.cell(writeRow, 1).value = needRowsInfo[writeRow - 1]
+                    if (2 == writeRow) or (3 == writeRow):
+                        if "NA" != wrs.cell(r, c).value and \
+                            float(wrs.cell(r, c).value) > 0:
+                            wws.cell(writeRow, writeCol).value = str(1)
+                        else:
+                            wws.cell(writeRow, writeCol).value = str(0)
+                    else:
+                        wws.cell(writeRow, writeCol).value = \
+                        wrs.cell(r, c).value
                     writeRow += 1
 
-r1 = 16
-r2 = 15
-r3 = 20
-r4 = 5
-for c in range(2, wws.max_column + 1):
-    wws.cell(4, 1).value = "检测"
-    wws.cell(r1, 1).value = "识别"
-    wws.cell(r2, 1).value = "时间(ms)"
-    wws.cell(r3, 1).value = "得分"
-    wws.cell(r4, 1).value = "识别有效率"
+                for r in range(individuleStartRow, wrs.max_row + 1):
+                    tmpS = wrs.cell(r, c).value
+                    if None != tmpS and -1 != tmpS.find("-correct"):
+                        totalCorrectCnt = int(wrs.cell(r + 1, c).value)
+                        wws.cell(writeRow, writeCol).value = \
+                        wrs.cell(r + 2, c).value
+                        wws.cell(writeRow, 1).value = "得分"
+                        break
+                    else:
+                        wws.cell(writeRow, writeCol).value = "NA"
+                        wws.cell(writeRow, 1).value = "得分"
+                writeRow += 1
 
-    if int(wws.cell(r4, c).value) > 0:
-        tmpF = float(wws.cell(r4 + 1, c).value) / float(wws.cell(r4, c).value)
-        wws.cell(r4, c).value = round(tmpF, 2)
-    else:
-        wws.cell(r4, c).value = float(0)
+                wws.cell(writeRow, writeCol).value = it
+                wws.cell(writeRow, 1).value = "Name"
 
-    if int(wws.cell(4, c).value) > 0:
-        wws.cell(4, c).value = float(1)
-    else:
-        wws.cell(4, c).value = float(0)
+                for r in [6, 7, 8]:
+                    tmpI = int(wws.cell(r, writeCol).value)
+                    if (None == totalCorrectCnt):
+                        wws.cell(r, writeCol).value = "NA" 
+                    else:
+                        wws.cell(r, writeCol).value = \
+                        str(round(tmpI / float(totalCorrectCnt), 2))
 
-    if "NA" == wws.cell(r2, c).value:
-        wws.cell(r2, c).value = float(0)
-    else:
-        wws.cell(r2, c).value = float(wws.cell(r2, c).value)
-
-    if float(wws.cell(r1, c).value) > 0.0:
-        wws.cell(r1, c).value = float(1)
-    else:
-        wws.cell(r1, c).value = float(0)
-
-    for r in range(r3, wws.max_row + 1):
-        wws.cell(r3, c).value = float(0)
-        if -1 != str(wws.cell(r, c).value).find("correct") \
-        and 1 == wws.cell(r1, c).value:
-            wws.cell(r3, c).value = float(wws.cell(r + 2, c).value)
-            break
+cMax = wws.max_column + 1
+wws.cell(1, cMax).value = "Average"
+for r in range(2, 10):
+    totalF = 0.0
+    cnt = 0
+    for c in range(2, cMax):
+        tmp = wws.cell(r, c).value
+        if "NA" == tmp:
+            continue
+        else:
+            cnt += 1
+            totalF += float(tmp)
+    wws.cell(r, cMax).value = round(totalF / cnt, 2)
 
 ww.save(xlsFileW)
 
