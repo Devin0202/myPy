@@ -39,14 +39,15 @@ def postJob(logLocal, logRemote):
     return
 
 ### Params region
-cLocalResults = "/home/devin/Desktop/TestResults/"
-cDataDst = "/sdcard/TestData"
-cLogDst = "/sdcard/TestLog"
-cAppObj = "com.megvii.test/com.facepp.demo.LoadingActivity"
-cAppID = "com.megvii.test"
 dataFolder = "/media/devin/OpenImage600/faces/"
 objs = ["yanchangjian", "guangming", "yukeke"]
 objs = ["daiyi", "sunhaiyan", "xinglj"]
+
+cDataDst = "/sdcard/TestData"
+cLogDst = "/sdcard/TestLog"
+cAppID = "com.megvii.test"
+cAppObj = "com.megvii.test/com.facepp.demo.LoadingActivity"
+cLocalResults = "/home/devin/Desktop/TestResults/"
 
 folderDoneList = \
 ["0830111934", "0830110842", "0830110943", "0830111019", "0830111052", \

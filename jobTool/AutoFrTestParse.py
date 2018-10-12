@@ -626,8 +626,8 @@ def writeCaseMap(mCaseDict, mInfoDict, mList, mWorkSheet):
         print(os.linesep)
 
 ### Params region
-xlsFileW = "/home/devin/Desktop/TestResultXlsx/InterimData.xlsx"
 xlsFileR = "/home/devin/Desktop/TestResults/FrSet2018.xlsx"
+xlsFileW = "/home/devin/Desktop/TestResultXlsx/InterimData.xlsx"
 srcRoot = "/home/devin/Desktop/TestResults/"
 checkList = ["daiyi", "baoyuandong", "sunhaiyan", "xinglj", "peiyi", "zhuyawen"]
 checkList = ["yukeke", "yanchangjian", "guangming", "baoyuandong"]
