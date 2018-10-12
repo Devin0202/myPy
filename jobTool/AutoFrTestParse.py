@@ -207,11 +207,13 @@ class LogInfo:
         print(os.linesep)
 
 class CaseInfo:
-    def __init__(self, name, mQuitLastTime, mRemainInRecgQueue, mIsLastRecgBack):
+    def __init__(self, name, mQuitLastTime, mRemainInRecgQueue, \
+        mIsLastRecgBack, iFaceOccurTime):
         self.objName = name
         self.quitLastTime = mQuitLastTime
         self.remainInRecgQueue = mRemainInRecgQueue
         self.isLastRecgBack = mIsLastRecgBack
+        self.firstFaceOccurTime = iFaceOccurTime
         self.firstDetTime = None
         self.firstParseTime = None
 
@@ -240,6 +242,9 @@ class CaseInfo:
         self.recgIDs = {}
         self.recgSuccess = 0
         self.recgCorrectTime = []
+
+    def setIsLastRecgBack(self, mIsLastRecgBack):
+        self.isLastRecgBack = mIsLastRecgBack
 
     def printResult(self, mWorkSheet, mCase):
         if (None == self.objName):
@@ -348,13 +353,30 @@ class CaseInfo:
             writeExcel.append(str(int(self.parseAvgCost)))
             print("parseAvgCost: " + str(round(self.parseAvgCost, 0)))
 
-        if (None != self.firstDetTime and None != self.firstParseTime):
-            tmp0I = self.firstParseTime - self.firstDetTime
+        # firstDetTime firstFaceOccurTime
+        if (None != self.firstFaceOccurTime and None != self.firstParseTime):
+            tmp0I = self.firstParseTime - self.firstFaceOccurTime
             writeExcel.append(str(tmp0I))
-            print("feelCost: " + str(tmp0I))
+            print("RecgFeelCost: " + str(tmp0I))
         else:
             writeExcel.append("NA")
-            print("feelCost: NA")
+            print("RecgFeelCost: NA")
+
+        if (None != self.firstFaceOccurTime and None != self.firstDetTime):
+            tmp0I = self.firstDetTime - self.firstFaceOccurTime
+            writeExcel.append(str(tmp0I))
+            print("DetFeelCost: " + str(tmp0I))
+        else:
+            writeExcel.append("NA")
+            print("DetFeelCost: NA")
+
+        if (None != self.firstParseTime and None != self.firstDetTime):
+            tmp0I = self.firstParseTime - self.firstDetTime
+            writeExcel.append(str(tmp0I))
+            print("FeelCost: " + str(tmp0I))
+        else:
+            writeExcel.append("NA")
+            print("FeelCost: NA")
 
         for it in self.recgIDs.keys():
             if (-1 != it.find(self.objName)):
@@ -389,16 +411,26 @@ class CaseInfo:
         ifs = 0
         iss = 0
         its = 0
+        tmpImin = sys.maxsize
         for it in self.recgCorrectTime:
-            if it - self.firstDetTime < 5000:
+            tmp0I = it - self.firstFaceOccurTime
+            if tmp0I < tmpImin:
+                tmpImin = tmp0I
+
+            if tmp0I < 2000:
                 ifs += 1
-            elif it - self.firstDetTime < 10000:
+            elif tmp0I < 5000:
                 iss += 1
-            elif it - self.firstDetTime < 15000:
+            elif tmp0I < 15000:
                 its += 1
+
+        if (tmpImin == sys.maxsize):
+            tmpImin = "NA"
+
         writeExcel.append(str(ifs))
         writeExcel.append(str(iss + ifs))
         writeExcel.append(str(its + iss + ifs))
+        writeExcel.append(str(tmpImin))
         # writeExcel.append(str(len(self.recgCorrectTime)))
 
         ColNum = None
@@ -436,28 +468,54 @@ def printDict(myDict):
         obj = myDict.get(it)
         obj.printResult()
 
-def getCaseDict(myDict, mNameCaseDict, mOriList):
+def getCaseDict(myDict, mNameCaseDict, mOriList, iCaseFfoTsDict):
     s = {}
     for it in myDict.keys():
         name = None
         cID = myDict.get(it).caseID
-        for x in mNameCaseDict.keys():
-            for y in mNameCaseDict.get(x):
-                if (y == myDict.get(it).caseID):
+        if cID not in s.keys():
+            for x in mNameCaseDict.keys():
+                if cID in mNameCaseDict.get(x):
                     name = x
+                if None != name:
                     break
 
-        tmpS1 = None
-        tmpS2 = None
-        for line in mOriList:
-            if ((-1 != line.find("quitCost: ")) and (-1 != line.find(cID))):
-                tmpS1 = line.split(" arrayRemain: ")[0].split("quitCost: ")[1]
-                tmpS2 = line.split(" arrayRemain: ")[1]
+            tmp0S = None
+            tmp1S = None
+            tmp2S = None
+            tmp0I = None
+            tmpImin = None
+            for key in iCaseFfoTsDict.keys():
+                if cID in key:
+                    tmp0S = cID + "/" + iCaseFfoTsDict[key]
 
-        if "recoStart" == myDict.get(it).getEndStatus():
-            s[cID] = CaseInfo(name, int(tmpS1), int(tmpS2), False)
+            for line in mOriList:
+                if ((-1 != line.find("quitCost: ")) and (-1 != line.find(cID))):
+                    tmpSplits = line.split(" arrayRemain: ")
+                    tmp1S = tmpSplits[0].split("quitCost: ")[1]
+                    tmp2S = tmpSplits[1]
+
+                if -1 != line.find("/" + cID + "/"):
+                    if None == tmpImin:
+                        tmpImin = int(line.split("|D||")[0])
+                    else:
+                        tmpImin = min(tmpImin, int(line.split("|D||")[0]))
+
+                if -1 != line.find(tmp0S):
+                    tmp0I = int(line.split("|D||")[0])
+
+            if None == tmp0I:
+                tmp0I = tmpImin
+
+            s[cID] = CaseInfo(name, int(tmp1S), int(tmp2S), True, tmp0I)
+            print(name)
+            print(cID)
+            print(tmp0I)
         else:
-            s[cID] = CaseInfo(name, int(tmpS1), int(tmpS2), True)
+            if "recoStart" == myDict.get(it).getEndStatus():
+                s[cID].setIsLastRecgBack(False)
+            else:
+                s[cID].setIsLastRecgBack(True)
     return s
 
 def writeCaseMap(mCaseDict, mInfoDict, mList, mWorkSheet):
@@ -568,35 +626,53 @@ def writeCaseMap(mCaseDict, mInfoDict, mList, mWorkSheet):
         print(os.linesep)
 
 ### Params region
+xlsFileW = "/home/devin/Desktop/TestResultXlsx/InterimData.xlsx"
+xlsFileR = "/home/devin/Desktop/TestResults/FrSet2018.xlsx"
+srcRoot = "/home/devin/Desktop/TestResults/"
+checkList = ["daiyi", "baoyuandong", "sunhaiyan", "xinglj", "peiyi", "zhuyawen"]
+checkList = ["yukeke", "yanchangjian", "guangming", "baoyuandong"]
+# checkList = ["yukeke"]
+
 ### Job region
-xlsFileR = "/home/devin/Desktop/tmp/FrSet2018.xlsx"
 nameCaseDict = {}
-wb = load_workbook(filename = xlsFileR)
+caseFfoTsDict = {}   # FfoTs: First face occurrence Time stamp
+if os.path.isfile(xlsFileR):
+    wb = load_workbook(filename = xlsFileR)
+else:
+    print("No xls files for reading!!!")
+    sys.exit(0)
+
 print(wb.sheetnames)
 for it in wb.sheetnames:
     nameCase = []
     sheet = wb[it]
-    tmp = sheet['E2':'E45']
-    for x in tmp:
-        if (None != x[0].value):
-            nameCase.append(str(x[0].value))
+    for x in range(2, 46):
+        tmp = sheet.cell(x, 5).value
+        if (None != tmp):
+            nameCase.append(str(tmp))
+            tmpTuple = (it, str(tmp))
+            caseFfoTsDict[tmpTuple] = str(sheet.cell(x, 7).value)
     nameCaseDict[it] = nameCase
 
+# print("caseFfoTsDict:")
+# print(len(caseFfoTsDict.keys()))
+# for it in caseFfoTsDict.keys():
+#     if ("0830111811" in it):
+#         print(it)
+#         print(caseFfoTsDict[it])
+# sys.exit(0)
+
+# print("nameCaseDict:")
 # for it in nameCaseDict.keys():
 #     print(it)
 #     obj = nameCaseDict.get(it)
 #     print(obj)
 # sys.exit(0)
 
-xlsFileW = "/home/devin/Desktop/TestResultXlsx/InterimData.xlsx"
 if os.path.isfile(xlsFileW):
     wb = load_workbook(filename = xlsFileW)
 else:
     wb = Workbook()
-
-srcRoot = "/home/devin/Desktop/tmp/"
-checkList = ["daiyi", "baoyuandong", "sunhaiyan", "xinglj", "peiyi", "zhuyawen"]
-checkList = ["yukeke", "yanchangjian", "guangming"]
 
 for suffix in checkList:
     ws = wb.create_sheet("newsheet", 0)
@@ -619,16 +695,19 @@ for suffix in checkList:
     ws["A17"] = "平均有效识别耗时(ms)"
     ws["A18"] = "平均无效识别耗时(ms)"
     ws["A19"] = "平均解析耗时(ms)"
-    ws["A20"] = "主观耗时(ms):首识别首检测时差"
-    ws["A21"] = "有效帧识别正确率"
-    ws["A22"] = "退出等待耗时(ms)"
-    ws["A23"] = "识别队列剩余"
-    ws["A24"] = "识别结果全返回"
-    ws["A25"] = "5秒内识别正确次数"
-    ws["A26"] = "10秒内识别正确次数"
-    ws["A27"] = "15秒内识别正确次数"
+    ws["A20"] = "主观耗时(ms):首识别-人出现 时差"
+    ws["A21"] = "主观耗时(ms):首检测-人出现 时差"
+    ws["A22"] = "主观耗时(ms):首识别-首检测 时差"
+    ws["A23"] = "有效帧识别正确率"
+    ws["A24"] = "退出等待耗时(ms)"
+    ws["A25"] = "识别队列剩余"
+    ws["A26"] = "识别结果全返回"
+    ws["A27"] = "2秒内识别正确次数"
+    ws["A28"] = "5秒内识别正确次数"
+    ws["A29"] = "15秒内识别正确次数"
+    ws["A30"] = "识别正确-人出现 最短耗时"
 
-    ws.column_dimensions[get_column_letter(1)].width = 31
+    ws.column_dimensions[get_column_letter(1)].width = 34
     for i in range(2, 40):
         ws.column_dimensions[get_column_letter(i)].width = 15
 
@@ -647,7 +726,7 @@ for suffix in checkList:
             if -1 != line.find("file: "):
                 tmpStr = line.split("file: ")[1].split(" status:")[0]
                 if ("null" == tmpStr):
-                    print(tmpStr)
+                    print("One case finish~")
                 else:
                     elTime = int(line.split("|D||")[0])
                     dictKey = int(line.split("frameID: ")[1].split("file: ")[0])
@@ -657,7 +736,6 @@ for suffix in checkList:
                     tmpObj.setEL(elTime, cID, fn)
                     tmpObj.setET(elTime, "loadingEnd")
                     infoDict[dictKey] = tmpObj
-                print(os.linesep)
     else:
         print("No Source!!!")
         sys.exit(0)
@@ -702,7 +780,7 @@ for suffix in checkList:
                     obj.setER(erTime)
                     obj.setET(erTime, "recoEnd")
     printDict(infoDict)
-    caseDict = getCaseDict(infoDict, nameCaseDict, oriList)
+    caseDict = getCaseDict(infoDict, nameCaseDict, oriList, caseFfoTsDict)
     writeCaseMap(caseDict, infoDict, oriList, ws)
 
     print("Lines in all files: " + str(len(oriList)))

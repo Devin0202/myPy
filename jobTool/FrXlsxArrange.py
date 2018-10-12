@@ -20,11 +20,11 @@ print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
 xlsFileR = "/home/devin/Desktop/TestResultXlsx/InterimData.xlsx"
 xlsFileW = "/home/devin/Desktop/TestResultXlsx/AllData.xlsx"
 indexSheet = "caseIndex"
-hint = ["2m", "正", "普"]
+hint = ["3m", "正", "普"]
 needRowsInfo = ["视频片段编号", "检测", "识别正确", "识别有效率", "响应时间(ms)", \
-"5秒内正确识别率", "10秒内正确识别率", "15秒内正确识别率"]
-needRows = [1, 4, 21, 7, 20, 25, 26, 27]
-individuleStartRow = 29
+"2秒内正确识别率", "5秒内正确识别率", "15秒内正确识别率", "识别正确-人出现 最短耗时"]
+needRows = [1, 4, 23, 7, 20, 27, 28, 29, 30]
+individuleStartRow = 32
 
 ### Job region
 matchRows = []
@@ -58,7 +58,7 @@ for it in hint:
     newSheet += it
 
 wws = ww.create_sheet(newSheet, 0)
-wws.column_dimensions[get_column_letter(1)].width = 21
+wws.column_dimensions[get_column_letter(1)].width = 23
 for i in range(2, 40):
     wws.column_dimensions[get_column_letter(i)].width = 15
 
@@ -111,7 +111,7 @@ for it in wr.sheetnames:
 
 cMax = wws.max_column + 1
 wws.cell(1, cMax).value = "Average"
-for r in range(2, 10):
+for r in range(2, 11):
     totalF = 0.0
     cnt = 0
     for c in range(2, cMax):
@@ -122,6 +122,20 @@ for r in range(2, 10):
             cnt += 1
             totalF += float(tmp)
     wws.cell(r, cMax).value = round(totalF / cnt, 2)
+
+wws.cell(1, cMax + 1).value = "Min"
+for r in [5, 9]:
+    min0I = "NA"
+    for c in range(2, cMax):
+        tmp = wws.cell(r, c).value
+        if "NA" == tmp:
+            continue
+        else:
+            if "NA" == min0I:
+                min0I = int(tmp)
+            else:
+                min0I = min(int(tmp), min0I)
+    wws.cell(r, cMax + 1).value = min0I
 
 ww.save(xlsFileW)
 

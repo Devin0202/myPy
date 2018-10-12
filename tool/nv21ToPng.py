@@ -12,12 +12,13 @@ print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
 cols = 1280
 rows = 720
-srcRoot = "/home/devin/Desktop/tmp/0830111052/"
-dstRoot = "/home/devin/Desktop/tmp/0830111052png/"
+srcRoot = "/media/devin/OpenImage600/face3/"
+dstRoot = "/media/devin/OpenImage600/face3Visiable/"
 suffix = ".nv21"
 lenSuffix = len(suffix)
 fileBytes = cols * rows * 3 / 2
-cvImgSaver = [int(cv2.IMWRITE_PNG_COMPRESSION), 3]
+# cvImgSaver = [int(cv2.IMWRITE_PNG_COMPRESSION), 3]
+cvImgSaver = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
 index = 0
 
 if os.path.exists(srcRoot):
@@ -33,7 +34,7 @@ if os.path.exists(srcRoot):
                 imgYuv = np.fromstring(oriData, dtype = np.uint8)
                 imgYuv = np.reshape(imgYuv, (-1, cols))
                 imgBgr = cv2.cvtColor(imgYuv, cv2.COLOR_YUV2BGR_NV21)
-                store = name.replace(suffix, ".png")
+                store = name.replace(suffix, ".jpg")
                 store = os.path.join(rt, store)
                 store = store.replace(srcRoot, dstRoot)
                 storeRoute = os.path.split(store)
