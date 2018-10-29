@@ -12,8 +12,8 @@ print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
 cols = 1280
 rows = 720
-srcRoot = "/media/devin/OpenImage600/face3/"
-dstRoot = "/media/devin/OpenImage600/face3Visiable/"
+srcRoot = "/home/devin/Downloads/1026164213/"
+dstRoot = "/home/devin/Downloads/1026164213Visiable/"
 suffix = ".nv21"
 lenSuffix = len(suffix)
 fileBytes = cols * rows * 3 / 2

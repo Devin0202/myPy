@@ -11,49 +11,77 @@ import subprocess
 print(sys.version)
 print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
 ### Defs region
-def preJob(pushThing, dstSuffix, dataDst, logDst, appObj):
-    cmd = "adb shell rm -rf " + logDst + "/*"
-    (status, output) = subprocess.getstatusoutput(cmd)
-
-    cmd = "adb shell rm -rf " + dataDst + "/*"
-    (status, output) = subprocess.getstatusoutput(cmd)
-
-    cmd = "adb push " + pushThing + " " + dataDst + "/" + dstSuffix
-    (status, output) = subprocess.getstatusoutput(cmd)
-
-    cmd = "adb shell input keyevent 224"
+def startJob(iAdbDevices, appObj, iAppID):
+    cmd = "adb" + iAdbDevices + "shell input keyevent 224"
     (status, output) = subprocess.getstatusoutput(cmd)
     time.sleep(5)
 
-    cmd = "adb shell am start -n " + appObj
+    cmd = "adb" + iAdbDevices + "shell am start -n " + appObj
     (status, output) = subprocess.getstatusoutput(cmd)
-    time.sleep(25)
+    
+    while (1):
+        cmd = "adb" + iAdbDevices + "shell ps|grep -E \"" + iAppID + "\""
+        (status, output) = subprocess.getstatusoutput(cmd)
+        if "" == output:
+            print("Wait app start: " + status)
+            time.sleep(10)
+        else:
+            print("App start: " + output)
+            break
     return
 
-def postJob(logLocal, logRemote):
+def preJobEx(pushThing, dstSuffix, dataDst, logDst, iAdbDevices):
+    cmd = "adb" + iAdbDevices + "shell rm -rf " + logDst + "/*"
+    (status, output) = subprocess.getstatusoutput(cmd)
+    return
+
+def preJob(pushThing, dstSuffix, dataDst, logDst, iAdbDevices):
+    cmd = "adb" + iAdbDevices + "shell rm -rf " + logDst + "/*"
+    (status, output) = subprocess.getstatusoutput(cmd)
+
+    cmd = "adb" + iAdbDevices + "shell rm -rf " + dataDst + "/*"
+    (status, output) = subprocess.getstatusoutput(cmd)
+
+    if True:
+        cmd = "adb" + iAdbDevices + "push " + pushThing + " " + dataDst + "/" \
+                + dstSuffix
+        print("PushOne: " + cmd)
+    else:
+        cmd = "adb" + iAdbDevices + " shell cp -r " + "/sdcard/TestFull/" \
+                + pushThing.split("/")[-1] + " " + dataDst
+        print("CopyOne: " + cmd)
+
+    (status, output) = subprocess.getstatusoutput(cmd)
+    time.sleep(60)
+    return
+
+def postJob(logLocal, logRemote, iAdbDevices):
     if not os.path.exists(logLocal):
         os.makedirs(logLocal)
 
-    cmd = "adb pull " + logRemote + " " + logLocal
+    cmd = "adb" + iAdbDevices + "pull " + logRemote + " " + logLocal
     (status, output) = subprocess.getstatusoutput(cmd)
-    return
+    print(str(output))
+
+    if -1 != output.find("0 files pulled."):
+        return False
+    else:
+        return True
 
 ### Params region
-dataFolder = "/media/devin/OpenImage600/faces/"
-objs = ["yanchangjian", "guangming", "yukeke"]
-objs = ["daiyi", "sunhaiyan", "xinglj"]
+cAdbDevices = " -s 2255a361 "
+dataFolder = "/media/devin/OpenImage600/face3/"
+objs = ["sunhaiyan", "xinglj", "baoyuandong"]
+objs = ["yanchangjian"]
 
 cDataDst = "/sdcard/TestData"
 cLogDst = "/sdcard/TestLog"
 cAppID = "com.megvii.test"
 cAppObj = "com.megvii.test/com.facepp.demo.LoadingActivity"
-cLocalResults = "/home/devin/Desktop/TestResults/"
+cLocalResults = "/home/devin/Desktop/tmp/"
 
 folderDoneList = \
-["0830111934", "0830110842", "0830110943", "0830111019", "0830111052", \
-"0830111206", "0830111231", "0830111321", "0830111348", "0830111417", \
-"0830111449", "0830111513", "0830111539", "0830111606", "0830111630", \
-"0830111653", "0830111718"]
+[]
 
 ### Job region
 for obj in objs:
@@ -64,24 +92,59 @@ for obj in objs:
                 continue
 
             pushOne = os.path.join(rt, name)
-            print("Push: " + pushOne)
-            preJob(pushOne, name, cDataDst, cLogDst, cAppObj)
+            preJob(pushOne, name, cDataDst, cLogDst, cAdbDevices)
 
-            while (1):
-                cmd = "adb shell ps|grep -E \"" + cAppID + "\""
-                (status, output) = subprocess.getstatusoutput(cmd)
-                # print(status)
-                # print(output)
-                if "" == output:
-                    print("App finished~")
-                    break
-                else:
-                    print("App running~")
-                    cmd = "adb shell input keyevent 224"
-                    (status, output) = subprocess.getstatusoutput(cmd)
-                    time.sleep(30)
+            if True:
+                rtv = False
+                while (not rtv):
+                    print("App start~")
+                    startJob(cAdbDevices, cAppObj, cAppID)
+                    while (1):
+                        cmd = "adb" + cAdbDevices + "shell ps|grep -E \"" \
+                        + cAppID + "\""
+                        (status, output) = subprocess.getstatusoutput(cmd)
+                        # print(status)
+                        # print(output)
+                        if "" == output:
+                            print("App finished~")
+                            break
+                        else:
+                            print("App running: " + output)
+                            cmd = "adb" + cAdbDevices \
+                                + "shell input keyevent 224"
+                            (status, output) = subprocess.getstatusoutput(cmd)
+                            time.sleep(30)
+                    rtv = postJob(cLocalResults + obj, cLogDst, cAdbDevices)
+            else:
+                for suffix in ["first/", "second/", "third/"]:
+                    cLocalOriResults = cLocalResults
+                    cLocalOriResults += suffix
+                    if not os.path.exists(cLocalOriResults):
+                        os.makedirs(cLocalOriResults)
 
-            postJob(cLocalResults + obj, cLogDst)
+                    preJobEx(pushOne, name, cDataDst, cLogDst, cAdbDevices)
+
+                    rtv = False
+                    while (not rtv):
+                        print(suffix + ": App start~")
+                        startJob(cAdbDevices, cAppObj, cAppID)
+                        while (1):
+                            cmd = "adb" + cAdbDevices + "shell ps|grep -E \"" \
+                                    + cAppID + "\""
+                            (status, output) = subprocess.getstatusoutput(cmd)
+                            # print(status)
+                            # print(output)
+                            if "" == output:
+                                print("App finished~")
+                                break
+                            else:
+                                print("App running: " + output)
+                                cmd = "adb" + cAdbDevices \
+                                    + "shell input keyevent 224"
+                                (status, output) = subprocess.getstatusoutput(cmd)
+                                time.sleep(30)
+                        rtv = postJob(cLocalOriResults + obj, cLogDst, cAdbDevices)
+
             folderDoneList.append(name)
             print("Folders Done~")
             for it in folderDoneList:

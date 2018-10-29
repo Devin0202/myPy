@@ -25,7 +25,7 @@ xlsFileW = "/home/devin/Desktop/TestResultXlsx/AllData.xlsx"
 needRowsInfo = ["视频片段编号", "检测", "识别正确", "识别有效率", "响应时间(ms)", \
 "2秒内正确识别率", "5秒内正确识别率", "15秒内正确识别率", "识别正确-人出现 最短耗时"]
 needRows = [1, 4, 23, 7, 20, 27, 28, 29, 30]
-individuleStartRow = 32
+individuleStartRow = 34
 
 ### Job region
 matchRows = []

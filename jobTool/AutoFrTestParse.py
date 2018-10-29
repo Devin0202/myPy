@@ -6,6 +6,7 @@ Goal:       Parse Face Recognization results
 import os
 import sys
 import time
+from concurrent.futures import ProcessPoolExecutor, wait
 from openpyxl import load_workbook
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
@@ -64,8 +65,10 @@ class RecgInfo:
 class LogInfo:
     # __slots__ = ("frameID", "caseID", "loadCost", "loadFile", "detCost",
     #     "detNum")
-    def __init__(self, mFrameID):
+    def __init__(self, mFrameID, iFileID, iFileSN):
         self.frameID = mFrameID
+        self.fileID = iFileID
+        self.fileSN = iFileSN
         self.caseID = None
         self.__startTime = None
         self.__endTime = None
@@ -412,10 +415,14 @@ class CaseInfo:
         iss = 0
         its = 0
         tmpImin = sys.maxsize
+        tmpIminFile = None
+        tmpIminSN = None
         for it in self.recgCorrectTime:
-            tmp0I = it - self.firstFaceOccurTime
+            tmp0I = it[0] - self.firstFaceOccurTime
             if tmp0I < tmpImin:
                 tmpImin = tmp0I
+                tmpIminFile = it[1]
+                tmpIminSN = it[2]
 
             if tmp0I < 2000:
                 ifs += 1
@@ -424,14 +431,20 @@ class CaseInfo:
             elif tmp0I < 15000:
                 its += 1
 
-        if (tmpImin == sys.maxsize):
+        if (sys.maxsize == tmpImin):
             tmpImin = "NA"
+        if (None == tmpIminFile):
+            tmpIminFile = "NA"
+        if (None == tmpIminSN):
+            tmpIminSN = "NA"
 
         writeExcel.append(str(ifs))
         writeExcel.append(str(iss + ifs))
         writeExcel.append(str(its + iss + ifs))
         writeExcel.append(str(tmpImin))
         # writeExcel.append(str(len(self.recgCorrectTime)))
+        writeExcel.append(str(tmpIminFile))
+        writeExcel.append(str(tmpIminSN))
 
         ColNum = None
         for letter in range(2, 100):
@@ -483,7 +496,9 @@ def getCaseDict(myDict, mNameCaseDict, mOriList, iCaseFfoTsDict):
             tmp0S = None
             tmp1S = None
             tmp2S = None
+            tmp3S = None
             tmp0I = None
+            tmp1I = 0
             tmpImin = None
             for key in iCaseFfoTsDict.keys():
                 if cID in key:
@@ -494,6 +509,11 @@ def getCaseDict(myDict, mNameCaseDict, mOriList, iCaseFfoTsDict):
                     tmpSplits = line.split(" arrayRemain: ")
                     tmp1S = tmpSplits[0].split("quitCost: ")[1]
                     tmp2S = tmpSplits[1]
+
+                if ((-1 != line.find("Running remains: ")) and (-1 != line.find(cID))):
+                    if tmp1I < int(line.split("frameID: ")[1].split(" CaseIndex: ")[0]):
+                        tmp1I = int(line.split("frameID: ")[1].split(" CaseIndex: ")[0])
+                        tmp3S = line.split("Running remains: ")[1]
 
                 if -1 != line.find("/" + cID + "/"):
                     if None == tmpImin:
@@ -507,10 +527,16 @@ def getCaseDict(myDict, mNameCaseDict, mOriList, iCaseFfoTsDict):
             if None == tmp0I:
                 tmp0I = tmpImin
 
-            s[cID] = CaseInfo(name, int(tmp1S), int(tmp2S), True, tmp0I)
+            if None == tmp3S:
+                print("Old log~")
+            elif int(tmp3S) < int(tmp2S):
+                tmp2S = tmp3S
+
             print(name)
+            print(it)
             print(cID)
             print(tmp0I)
+            s[cID] = CaseInfo(name, int(tmp1S), int(tmp2S), True, tmp0I)
         else:
             if "recoStart" == myDict.get(it).getEndStatus():
                 s[cID].setIsLastRecgBack(False)
@@ -565,7 +591,8 @@ def writeCaseMap(mCaseDict, mInfoDict, mList, mWorkSheet):
                         objX.recgAllAvgTime[tmp] = objY.totalCost
 
                     if (-1 != tmp.find(objX.objName)):
-                        objX.recgCorrectTime.append(int(objZ.endParse))
+                        objX.recgCorrectTime.append((int(objZ.endParse), \
+                            objY.fileID, objY.fileSN))
 
                 if (None != objY.loadCost):
                     loadN += 1
@@ -625,13 +652,58 @@ def writeCaseMap(mCaseDict, mInfoDict, mList, mWorkSheet):
         objX.printResult(mWorkSheet, x)
         print(os.linesep)
 
+def concurrentJob(iObj, iOriList, iMark, iStr):
+    # print(iObj.frameID)
+    for mLine in iOriList:
+        if (-1 != mLine.find("frameID: " + str(iMark) + ' ')):
+            if (-1 != mLine.find("recoBad")):
+                epTime = int(mLine.split("|D||")[0])
+                rs = "NA"
+                confidence = float(-1)
+                iObj.setEP(epTime, rs, confidence)
+                iObj.setET(epTime, "recoBad")
+                iObj.setRecgValid(False)
+            elif (-1 != mLine.find("recoParse")):
+                epTime = int(mLine.split("|D||")[0])
+                rs = mLine.split(" ID: ")[1].split(" score:")[0]
+                confidence = float(mLine.split(" score:")[1])
+                iObj.setEP(epTime, rs, confidence)
+                iObj.setET(epTime, "recoParse")
+                iObj.setRecgValid(True)
+            elif (-1 != mLine.find("status: loadingStart")):
+                stTime = int(mLine.split("|D||")[0])
+                iObj.setST(stTime)
+                iObj.setET(stTime, "loadingStart")
+            elif (-1 != mLine.find("status: detectStart")):
+                sdTime = int(mLine.split("|D||")[0])
+                iObj.setSD(sdTime)
+                iObj.setET(sdTime, "detectStart")
+            elif (-1 != mLine.find("status: detectEnd")):
+                edTime = int(mLine.split("|D||")[0])
+                facesCnt = int(mLine.split("faceNum: ")[1])
+                iObj.setED(edTime, facesCnt)
+                iObj.setET(edTime, "detectEnd")
+            elif (-1 != mLine.find("status: recoStart")):
+                srTime = int(mLine.split("|D||")[0])
+                iObj.setSR(srTime)
+                iObj.setET(srTime, "recoStart")
+            elif (-1 != mLine.find("status: recoEnd")):
+                erTime = int(mLine.split("|D||")[0])
+                iObj.setER(erTime)
+                iObj.setET(erTime, "recoEnd")
+    sys.stdout.write(iStr)
+    sys.stdout.flush()
+    return iMark, iObj
+
 ### Params region
 xlsFileR = "/home/devin/Desktop/TestResults/FrSet2018.xlsx"
 xlsFileW = "/home/devin/Desktop/TestResultXlsx/InterimData.xlsx"
 srcRoot = "/home/devin/Desktop/TestResults/"
 checkList = ["daiyi", "baoyuandong", "sunhaiyan", "xinglj", "peiyi", "zhuyawen"]
-checkList = ["yukeke", "yanchangjian", "guangming", "baoyuandong"]
-# checkList = ["yukeke"]
+checkList += ["yukeke", "yanchangjian", "guangming"]
+
+futuresList = []
+executor = ProcessPoolExecutor(max_workers = 36)
 
 ### Job region
 nameCaseDict = {}
@@ -706,14 +778,18 @@ for suffix in checkList:
     ws["A28"] = "5秒内识别正确次数"
     ws["A29"] = "15秒内识别正确次数"
     ws["A30"] = "识别正确-人出现 最短耗时"
+    ws["A31"] = "首正确识别测试帧"
+    ws["A32"] = "首正确识别测试帧序号"
 
     ws.column_dimensions[get_column_letter(1)].width = 34
     for i in range(2, 40):
-        ws.column_dimensions[get_column_letter(i)].width = 15
+        ws.column_dimensions[get_column_letter(i)].width = 18
 
     singleRoot = srcRoot + suffix + '/'
+    futuresList = []
     oriList = []
     infoDict = {}
+    caseDict = {}
     if os.path.exists(singleRoot):
         for rt, dirs, files in os.walk(singleRoot):
             for name in files:
@@ -732,7 +808,9 @@ for suffix in checkList:
                     dictKey = int(line.split("frameID: ")[1].split("file: ")[0])
                     cID = line.split("/")[3]
                     fn = line.split("/")[4].split(" status:")[0]
-                    tmpObj = LogInfo(dictKey)
+                    sn = int(line.split("fileSN: ")[-1])
+                    tmpStr = tmpStr.split("/")[-1]
+                    tmpObj = LogInfo(dictKey, tmpStr, sn)
                     tmpObj.setEL(elTime, cID, fn)
                     tmpObj.setET(elTime, "loadingEnd")
                     infoDict[dictKey] = tmpObj
@@ -740,45 +818,19 @@ for suffix in checkList:
         print("No Source!!!")
         sys.exit(0)
 
+    index = 0
     for it in infoDict.keys():
+        index += 1
+        tmpS = "\r" + str(index) + '/' + str(len(infoDict.keys()))
         obj = infoDict.get(it)
-        for line in oriList:
-            if (-1 != line.find("frameID: " + str(it) + ' ')):
-                if (-1 != line.find("recoBad")):
-                    epTime = int(line.split("|D||")[0])
-                    rs = "NA"
-                    confidence = float(-1)
-                    obj.setEP(epTime, rs, confidence)
-                    obj.setET(epTime, "recoBad")
-                    obj.setRecgValid(False)
-                elif (-1 != line.find("recoParse")):
-                    epTime = int(line.split("|D||")[0])
-                    rs = line.split(" ID: ")[1].split(" score:")[0]
-                    confidence = float(line.split(" score:")[1])
-                    obj.setEP(epTime, rs, confidence)
-                    obj.setET(epTime, "recoParse")
-                    obj.setRecgValid(True)
-                elif (-1 != line.find("status: loadingStart")):
-                    stTime = int(line.split("|D||")[0])
-                    obj.setST(stTime)
-                    obj.setET(stTime, "loadingStart")
-                elif (-1 != line.find("status: detectStart")):
-                    sdTime = int(line.split("|D||")[0])
-                    obj.setSD(sdTime)
-                    obj.setET(sdTime, "detectStart")
-                elif (-1 != line.find("status: detectEnd")):
-                    edTime = int(line.split("|D||")[0])
-                    facesCnt = int(line.split("faceNum: ")[1])
-                    obj.setED(edTime, facesCnt)
-                    obj.setET(edTime, "detectEnd")
-                elif (-1 != line.find("status: recoStart")):
-                    srTime = int(line.split("|D||")[0])
-                    obj.setSR(srTime)
-                    obj.setET(srTime, "recoStart")
-                elif (-1 != line.find("status: recoEnd")):
-                    erTime = int(line.split("|D||")[0])
-                    obj.setER(erTime)
-                    obj.setET(erTime, "recoEnd")
+        future = executor.submit(concurrentJob, obj, oriList, it, tmpS)
+        futuresList.append(future)
+
+    wait(futuresList)
+    for future in futuresList:
+        tmpT = future.result()
+        infoDict[tmpT[0]] = tmpT[1]
+
     printDict(infoDict)
     caseDict = getCaseDict(infoDict, nameCaseDict, oriList, caseFfoTsDict)
     writeCaseMap(caseDict, infoDict, oriList, ws)
