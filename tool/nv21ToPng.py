@@ -10,25 +10,35 @@ import shutil
 import numpy as np
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
+# cols = 360
+# rows = 360
 cols = 1280
 rows = 720
-srcRoot = "/home/devin/Downloads/1026164213/"
-dstRoot = "/home/devin/Downloads/1026164213Visiable/"
+# cols = 640
+# rows = 480
+# cols = 222
+# rows = 222
+srcRoot = "/home/devin/Downloads/tmp/Full/"
+dstRoot = "/home/devin/Downloads/tmp/FullVisiable/"
 suffix = ".nv21"
 lenSuffix = len(suffix)
 fileBytes = cols * rows * 3 / 2
 # cvImgSaver = [int(cv2.IMWRITE_PNG_COMPRESSION), 3]
-cvImgSaver = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+cvImgSaver = [int(cv2.IMWRITE_JPEG_QUALITY), 100]
 index = 0
 
+needVideo = True
+
+dstList = []
 if os.path.exists(srcRoot):
     for rt, dirs, files in os.walk(srcRoot):
         for name in files:
             if len(name) - lenSuffix == name.find(suffix):
-                with open(os.path.join(rt, name), 'r') as fr:
+                with open(os.path.join(rt, name), 'rb') as fr:
                     oriData = fr.read()
                     if not len(oriData) == fileBytes:
-                        print(os.path.join(rt, name))
+                        print(len(oriData))
+                        print("Lenth dismatched: " + os.path.join(rt, name))
                         continue
 
                 imgYuv = np.fromstring(oriData, dtype = np.uint8)
@@ -42,6 +52,7 @@ if os.path.exists(srcRoot):
                 if not os.path.exists(storeRoute[0]):
                     os.makedirs(storeRoute[0])
                 cv2.imwrite(store, imgBgr, cvImgSaver)
+                dstList.append(store)
                 index += 1
             else:
                 old = os.path.join(rt, name)
@@ -57,6 +68,21 @@ if os.path.exists(srcRoot):
 else:
     print("No Source!!!")
     sys.exit(0)
+
+if (needVideo):
+    if not os.path.exists(dstRoot):
+        os.makedirs(dstRoot)
+
+    videoWriter = cv2.VideoWriter(dstRoot + "/video.avi", \
+        cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 30, (cols, rows))
+
+    dstList.sort()
+    for line in dstList:
+         imgBgr = cv2.imread(line)
+         videoWriter.write(imgBgr)
+    videoWriter.release()
+else:
+    print("No need for save video!!!")
 
 print(os.linesep)
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))

@@ -111,18 +111,23 @@ for it in wr.sheetnames:
                         str(round(tmpI / float(totalCorrectCnt), 2))
 
 cMax = wws.max_column + 1
+
 wws.cell(1, cMax).value = "Average"
+wws.cell(1, cMax + 2).value = "NA rate"
 for r in range(2, 11):
     totalF = 0.0
+    cntNA = 0
     cnt = 0
     for c in range(2, cMax):
         tmp = wws.cell(r, c).value
         if "NA" == tmp:
+            cntNA += 1
             continue
         else:
             cnt += 1
             totalF += float(tmp)
     wws.cell(r, cMax).value = round(totalF / cnt, 2)
+    wws.cell(r, cMax + 2).value = round(cntNA / (cntNA + cnt), 2)
 
 wws.cell(1, cMax + 1).value = "Min"
 for r in [5, 9]:

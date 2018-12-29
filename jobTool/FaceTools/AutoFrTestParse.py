@@ -500,6 +500,11 @@ def getCaseDict(myDict, mNameCaseDict, mOriList, iCaseFfoTsDict):
             tmp0I = None
             tmp1I = 0
             tmpImin = None
+
+            print(name)
+            print(it)
+            print(cID)
+
             for key in iCaseFfoTsDict.keys():
                 if cID in key:
                     tmp0S = cID + "/" + iCaseFfoTsDict[key]
@@ -532,16 +537,11 @@ def getCaseDict(myDict, mNameCaseDict, mOriList, iCaseFfoTsDict):
             elif int(tmp3S) < int(tmp2S):
                 tmp2S = tmp3S
 
-            print(name)
-            print(it)
-            print(cID)
             print(tmp0I)
             s[cID] = CaseInfo(name, int(tmp1S), int(tmp2S), True, tmp0I)
         else:
             if "recoStart" == myDict.get(it).getEndStatus():
                 s[cID].setIsLastRecgBack(False)
-            else:
-                s[cID].setIsLastRecgBack(True)
     return s
 
 def writeCaseMap(mCaseDict, mInfoDict, mList, mWorkSheet):
