@@ -194,6 +194,28 @@ def addFaces(key, secret, setID, folder, tokenMapping):
     infoSingleSet(mKey, mSecret, mSetID)
     print("Total faces registered: " + str(cntF))
 
+def searchSingleFace(key, secret, singleImage, fSetId, isPrintInfo):
+    url = "https://api-cn.faceplusplus.com/facepp/v3/search"
+    outData = {"image_file" : (urllib.parse.quote("test.jpg", encoding = "utf-8"), \
+        open(singleImage, "rb"))}
+    info = {"api_key" : key, "api_secret" : secret, "outer_id" : fSetId} 
+    r = requests.post(url, params = info, files = outData)
+
+    if (isPrintInfo):
+        print(os.linesep)
+        print(r.json())
+        print("searchSingleFace Http status: " + str(r.status_code))
+
+    tmp = r.json()["results"]
+    print(tmp[0]["face_token"])
+    print(tmp[0]["confidence"])
+
+    tmp = r.json()["faces"]
+    print(tmp[0]["face_rectangle"]["top"])
+    print(tmp[0]["face_rectangle"]["left"])
+    print(tmp[0]["face_rectangle"]["height"])
+    print(tmp[0]["face_rectangle"]["width"])
+
 ### Params region
 srcRoot = "/home/devin/Desktop/EF/"
 mTokenMapping = "/home/devin/Desktop/faceMap2.txt"
@@ -219,8 +241,14 @@ mCreateInfo = "Faces registered by python3 requests"
 
 # faceToken = detectSingleFace(mKey, mSecret, "/home/devin/Desktop/3.jpg", "杨华.jpg", True)
 # addSingleFace(mKey, mSecret, mSetID, faceToken, True)
+
 infoSets(mKey, mSecret)
 infoSingleSet(mKey, mSecret, mSetID)
+
+while (1):
+    searchSingleFace(mKey, mSecret, "/home/devin/Downloads/tmpJpg/baoyuandong/Rects/0830170059/17-01-03-746_E.jpg", \
+        mSetID, False)
+    time.sleep(2)
 
 print(os.linesep)
 print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))

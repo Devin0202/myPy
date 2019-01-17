@@ -16,7 +16,8 @@ def startJob(iAdbDevices, appObj, iAppID):
     (status, output) = subprocess.getstatusoutput(cmd)
     time.sleep(5)
 
-    cmd = "adb" + iAdbDevices + "shell am start -n " + appObj
+    cmd = "adb" + iAdbDevices + "shell am start -n " + appObj \
+        + " -e mode TestCase"
     (status, output) = subprocess.getstatusoutput(cmd)
     
     while (1):
@@ -52,7 +53,7 @@ def preJob(pushThing, dstSuffix, dataDst, logDst, iAdbDevices):
         print("CopyOne: " + cmd)
 
     (status, output) = subprocess.getstatusoutput(cmd)
-    time.sleep(60)
+    time.sleep(30)
     return
 
 def postJob(logLocal, logRemote, iAdbDevices):
@@ -113,7 +114,7 @@ for obj in objs:
                             cmd = "adb" + cAdbDevices \
                                 + "shell input keyevent 224"
                             (status, output) = subprocess.getstatusoutput(cmd)
-                            time.sleep(30)
+                            time.sleep(15)
                     rtv = postJob(cLocalResults + obj, cLogDst, cAdbDevices)
             else:
                 for suffix in ["first/", "second/", "third/"]:

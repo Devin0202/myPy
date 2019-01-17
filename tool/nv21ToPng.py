@@ -18,16 +18,16 @@ rows = 720
 # rows = 480
 # cols = 222
 # rows = 222
-srcRoot = "/home/devin/Downloads/tmp/Full/"
-dstRoot = "/home/devin/Downloads/tmp/FullVisiable/"
+srcRoot = "/home/devin/Desktop/tmp/tmp/"
+dstRoot = "/home/devin/Desktop/tmp/tmpVisiable/"
 suffix = ".nv21"
 lenSuffix = len(suffix)
 fileBytes = cols * rows * 3 / 2
 # cvImgSaver = [int(cv2.IMWRITE_PNG_COMPRESSION), 3]
-cvImgSaver = [int(cv2.IMWRITE_JPEG_QUALITY), 100]
+cvImgSaver = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
 index = 0
 
-needVideo = True
+needVideo = False
 
 dstList = []
 if os.path.exists(srcRoot):
@@ -82,6 +82,7 @@ if (needVideo):
          videoWriter.write(imgBgr)
     videoWriter.release()
 else:
+    print()
     print("No need for save video!!!")
 
 print(os.linesep)
