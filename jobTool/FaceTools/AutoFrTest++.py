@@ -2,6 +2,10 @@
 """
 Language:   python3
 Goal:       Batch running for Face Recognization test
+PS:         Please change the codes in subprocess.py
+            In "def run(...)":
+            stdout, stderr = process.communicate()
+            -> stdout, stderr = process.communicate(timeout = timeout)
 """
 import os
 import sys
@@ -10,28 +14,16 @@ import subprocess
 
 ### Defs region
 def startJob(iAdbDevices, appObj, iAppID):
-    status = 1
-    while (0 != status):
-        cmd = "adb" + iAdbDevices + "shell input keyevent 224"
-        (status, output) = myGetstatusoutput(cmd)
-        logWriter.printLog("startJob-Invoke cmd status: " + str(status))
-        time.sleep(5)
+    cmd = "adb" + iAdbDevices + "shell input keyevent 224"
+    safeExecute(cmd, "startJob-Invoke cmd status: ", 5)
 
-    status = 1
-    while (0 != status):
-        cmd = "adb" + iAdbDevices + "shell am start -n " + appObj \
+    cmd = "adb" + iAdbDevices + "shell am start -n " + appObj \
                 + " -e mode TestCase"
-        (status, output) = myGetstatusoutput(cmd)
-        logWriter.printLog("App start cmd status: " + str(status))
-        time.sleep(5)
+    safeExecute(cmd, "App start cmd status: ", 5)
 
     while (1):
-        status = 1
-        while (0 != status):
-            cmd = "adb" + iAdbDevices + "shell ps|findstr  \"" + iAppID + "\""
-            (status, output) = myGetstatusoutput(cmd)
-            logWriter.printLog("startJob-ps|findstr cmd status: " + str(status))
-            time.sleep(5)
+        cmd = "adb" + iAdbDevices + "shell pgrep \"" + iAppID + "\""
+        output = safeExecute(cmd, "startJob-pgrep cmd status: ", 5)
         if "" == output:
             logWriter.printLog("Wait app start: " + str(status))
             time.sleep(10)
@@ -40,51 +32,30 @@ def startJob(iAdbDevices, appObj, iAppID):
             break
     return
 
-def preJobEx(pushThing, dstSuffix, dataDst, logDst, iAdbDevices):
-    cmd = "adb" + iAdbDevices + "shell rm -rf " + logDst + "/*"
-    (status, output) = myGetstatusoutput(cmd)
-    return
-
 def preJob(pushThing, dstSuffix, dataDst, logDst, iAdbDevices):
-    status = 1
-    while (0 != status):
-        cmd = "adb" + iAdbDevices + "shell rm -rf " + logDst + "/*"
-        (status, output) = myGetstatusoutput(cmd)
-        logWriter.printLog("rm logDst cmd status: " + str(status))
-        time.sleep(5)
+    cmd = "adb" + iAdbDevices + "shell rm -rf " + logDst + "/*"
+    safeExecute(cmd, "rm logDst cmd status: ", 5)
 
-    status = 1
-    while (0 != status):
-        cmd = "adb" + iAdbDevices + "shell rm -rf " + dataDst + "/*"
-        (status, output) = myGetstatusoutput(cmd)
-        logWriter.printLog("rm dataDst cmd status: " + str(status))
-        time.sleep(5)
+    cmd = "adb" + iAdbDevices + "shell rm -rf " + dataDst + "/*"
+    safeExecute(cmd, "rm dataDst cmd status: ", 5)
 
-    if False:
+    if (isSDmode):
+        cmd = "adb" + iAdbDevices + " shell cp -r " + pushThing + " " + dataDst
+        logWriter.printLog("CopyOne: " + cmd)
+        safeExecute(cmd, "Prepare data cmd status: ", 10)
+    else:
         cmd = "adb" + iAdbDevices + "push " + pushThing + " " + dataDst + "/" \
                 + dstSuffix
         logWriter.printLog("PushOne: " + cmd)
-    else:
-        cmd = "adb" + iAdbDevices + " shell cp -r " + pushThing + " " + dataDst
-        logWriter.printLog("CopyOne: " + cmd)
-
-    status = 1
-    while (0 != status):
-        (status, output) = myGetstatusoutput(cmd)
-        logWriter.printLog("Prepare data cmd status: " + str(status))
-        time.sleep(10)
+        safeExecute(cmd, "Prepare data cmd status: ", 10, 500)
     return
 
 def postJob(logLocal, logRemote, iAdbDevices):
     if not os.path.exists(logLocal):
         os.makedirs(logLocal)
 
-    status = 1
-    while (0 != status):
-        cmd = "adb" + iAdbDevices + "pull " + logRemote + " " + logLocal
-        (status, output) = myGetstatusoutput(cmd)
-        logWriter.printLog("pull log cmd status: " + str(status))
-        time.sleep(5)
+    cmd = "adb" + iAdbDevices + "pull " + logRemote + " " + logLocal
+    output = safeExecute(cmd, "Prepare data cmd status: ", 5)
     logWriter.printLog(str(output))
 
     if -1 != output.find("0 files pulled."):
@@ -116,7 +87,12 @@ class EasyLog:
 def myGetstatusoutput(cmd, timeOut = 90):
     STDOUT = -2
     try:
-        data = subprocess.check_output(cmd, timeout=timeOut, shell=True, text=True, stderr=STDOUT)
+        if (isDos):
+            data = subprocess.check_output(cmd, timeout = timeOut, shell = True, \
+                text = True, stderr = STDOUT)
+        else:
+            data = subprocess.check_output(cmd, timeout = timeOut, shell = True, \
+                universal_newlines = True)
         exitcode = 0
     except subprocess.CalledProcessError as ex:
         data = ex.output
@@ -128,35 +104,55 @@ def myGetstatusoutput(cmd, timeOut = 90):
     if data[-1:] == '\n':
         data = data[:-1]
     return exitcode, data
-			
+
+def safeExecute(fCmd, fCmdInfo, fWaitTime, fCmdTimeOut = 90):
+    status = 1
+    while (0 != status):
+        cmd = fCmd
+        (status, output) = myGetstatusoutput(cmd, fCmdTimeOut)
+        logWriter.printLog(fCmdInfo + str(status))
+        time.sleep(fWaitTime)
+    return output
+
 ### Params region
 cAdbDevices = " -s 92d426e9 "
 dataFolder = "/storage/C03C-16FC/FaceCases/"
 objs = ["baoyuandong", "daiyi", "peiyi", "sunhaiyan", "xinglj", "zhuyawen"]
-
 cDataDst = "/sdcard/TestData"
 cLogDst = "/sdcard/TestLog"
 cAppID = "com.megvii.test"
 cAppObj = "com.megvii.test/com.facepp.demo.LoadingActivity"
-cLocalResults = "/home/devin/Desktop/tmp/"
-recordLogFolder = "/home/devin/Desktop/tmp/"
-logWriter = EasyLog(recordLogFolder)
+cLocalResults = "/home/devin/Downloads/tmp/"
+recordLogFolder = "/home/devin/Downloads/tmp"
+isDos = False
+isSDmode = False
 
 folderDoneList = \
 []
-
+logWriter = EasyLog(recordLogFolder)
 ### Job region
 logWriter.printLog(sys.version)
 logWriter.printLog(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
 for obj in objs:
-    dataSet = dataFolder + obj + "/cameraData"
-    cmd = "adb" + cAdbDevices + "shell ls " + dataSet
-    (status, output) = myGetstatusoutput(cmd)
-    logWriter.printLog(obj)
     dirs = []
-    lines = output.split("\n")
-    for i in lines:
-        dirs.append(i)
+    logWriter.printLog(obj)
+    dataSet = dataFolder + obj + "/cameraData"
+    if (isSDmode):
+        cmd = "adb" + cAdbDevices + "shell ls " + dataSet
+        (status, output) = myGetstatusoutput(cmd)
+
+        lines = output.split("\n")
+        for i in lines:
+            if (isDos):
+                dirs.append(i)
+            else:
+                tmp = i.split(" ")
+                for j in tmp[: -1]:
+                    dirs.append(j)
+    else:
+        for rt, folders, files in os.walk(dataSet):
+            for i in folders:
+                dirs.append(i)
 
     logWriter.printLog(dirs)
     for name in dirs:
@@ -173,10 +169,10 @@ for obj in objs:
             logWriter.printLog("App start~")
             startJob(cAdbDevices, cAppObj, cAppID)
             while (1):
-                cmd = "adb" + cAdbDevices + "shell ps|findstr  \"" \
+                cmd = "adb" + cAdbDevices + "shell pgrep \"" \
                     + cAppID + "\""
                 (status, output) = myGetstatusoutput(cmd)
-                logWriter.printLog("Running-ps|findstr cmd status: " + str(status))
+                logWriter.printLog("Running-pgrep cmd status: " + str(status))
 
                 if "" == output:
                     logWriter.printLog("App finished~")
@@ -186,40 +182,26 @@ for obj in objs:
                 else:
                     localCnt += 1
                     logWriter.printLog("App running: " + str(output))
-                    status = 1
-                    while (0 != status):
-                        cmd = "adb" + cAdbDevices \
-                            + "shell input keyevent 224"
-                        (status, output) = myGetstatusoutput(cmd)
-                        logWriter.printLog("Running-Invoke cmd status: " + str(status))
-                        time.sleep(2)
+                    cmd = "adb" + cAdbDevices + "shell input keyevent 224"
+                    safeExecute(cmd, "Running-Invoke cmd status: ", 2)
                     time.sleep(10)
 
-                    if (30 < localCnt):
+                    if (90 < localCnt):
                         logWriter.printLog("App timeout: " + name)
                         timeoutLimit += 1
                         break;
                     else:
                         pass
 
-            status = 1
-            while (0 != status):
-                cmd = "adb" + cAdbDevices + "shell am force-stop \"" \
-                + cAppID + "\""
-                (status, output) = myGetstatusoutput(cmd)
-                logWriter.printLog("force-stop cmd status: " + str(status))
-                time.sleep(3)
-            status = 1
-            while (0 != status):
-                cmd = "adb" + cAdbDevices + "shell am kill \"" \
-                + cAppID + "\""
-                (status, output) = myGetstatusoutput(cmd)
-                logWriter.printLog("kill cmd status: " + str(status))
-                time.sleep(3)
+            cmd = "adb" + cAdbDevices + "shell am force-stop \"" + cAppID + "\""
+            safeExecute(cmd, "force-stop cmd status: ", 3)
+            cmd = "adb" + cAdbDevices + "shell am kill \"" + cAppID + "\""
+            safeExecute(cmd, "kill cmd status: ", 3)
+
             if (0 == timeoutLimit):
                 rtv = postJob(cLocalResults + obj, cLogDst, cAdbDevices)
             else:
-                if (0 != timeoutLimit):
+                if (1 == timeoutLimit):
                     rtv = False
                     logWriter.printLog("Try again: " + obj + ' ' + name)
                 else:

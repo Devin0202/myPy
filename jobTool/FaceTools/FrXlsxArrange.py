@@ -22,9 +22,10 @@ indexSheet = "caseIndex"
 hint = ["3m", "正", "普"]
 xlsFileW = "/home/devin/Desktop/TestResultXlsx/AllData.xlsx"
 
-needRowsInfo = ["视频片段编号", "检测", "识别正确", "识别有效率", "响应时间(ms)", \
-"2秒内正确识别率", "5秒内正确识别率", "15秒内正确识别率", "识别正确-人出现 最短耗时"]
-needRows = [1, 4, 23, 7, 20, 27, 28, 29, 30]
+needRowsInfo = ["视频片段编号", "检测", "识别正确", "识别有效率", "首识别-首检测 时差", \
+"首检测-人出现 时差", "响应时间(ms)", "2秒内正确识别率", "5秒内正确识别率", \
+"15秒内正确识别率", "识别正确-人出现 最短耗时"]
+needRows = [1, 4, 23, 7, 22, 21, 20, 27, 28, 29, 30]
 individuleStartRow = 34
 
 ### Job region
@@ -43,10 +44,15 @@ if indexSheet in wr.sheetnames:
 
     for r in matchRows:
         for c in range(5, wrs.max_column + 1):
-            matchCases.append(wrs.cell(r, c).value)
+            cellValue = wrs.cell(r, c).value
+            if (None != cellValue):
+                matchCases.append(cellValue)
 else:
     print("No case index sheet!!!")
     sys.exit(0)
+
+print()
+print("MatchCases:")
 print(matchCases)
 
 if os.path.isfile(xlsFileW):
@@ -102,7 +108,7 @@ for it in wr.sheetnames:
                 wws.cell(writeRow, writeCol).value = it
                 wws.cell(writeRow, 1).value = "Name"
 
-                for r in [6, 7, 8]:
+                for r in [8, 9, 10]:
                     tmpI = int(wws.cell(r, writeCol).value)
                     if (None == totalCorrectCnt):
                         wws.cell(r, writeCol).value = "NA" 
@@ -114,7 +120,7 @@ cMax = wws.max_column + 1
 
 wws.cell(1, cMax).value = "Average"
 wws.cell(1, cMax + 2).value = "NA rate"
-for r in range(2, 11):
+for r in range(2, 13):
     totalF = 0.0
     cntNA = 0
     cnt = 0
@@ -130,7 +136,7 @@ for r in range(2, 11):
     wws.cell(r, cMax + 2).value = round(cntNA / (cntNA + cnt), 2)
 
 wws.cell(1, cMax + 1).value = "Min"
-for r in [5, 9]:
+for r in [5, 6, 7, 11]:
     min0I = "NA"
     for c in range(2, cMax):
         tmp = wws.cell(r, c).value
