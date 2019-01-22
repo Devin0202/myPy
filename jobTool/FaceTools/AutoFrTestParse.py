@@ -10,11 +10,67 @@ from concurrent.futures import ProcessPoolExecutor, wait
 from openpyxl import load_workbook
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
-
-print(sys.version)
-print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
+import getopt
 
 ### Defs region
+def printUsage():
+    print(u"""
+Usage:
+-h/--help:      show this help message
+-i/--xlsFileR:  index excel file (.xlsx) path
+-o/--xlsFileW:  output excel file (.xlsx) path
+-d/--srcRoot:   directory where face recognition log folders are
+-l/--checkList: a list of folder names in [srcRoot] seperated by '/'; if not
+                specified, all direct sub folders in [srcRoot] are processed
+
+E.g.:
+$>python [this.script] -i ./facerecog-index.xlsx -d ./facerecog.log
+  -o ./facerecog-interim-result.xlsx -l yawen/xingliujian/yukeke
+""")
+
+def parseOpt():
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:l:', \
+                ['help', 'xlsFileR=', 'srcRoot=', 'xlsFileW=', 'checkList='])
+    except getopt.GetoptError as err:
+        print(str(err))
+        sys.exit(1)
+    for o, v in opts:
+        if o in ('-h', '--help'):
+            printUsage()
+            sys.exit(1)
+        elif o in ('-i', '--xlsFileR'):
+            xlsFileR = v
+        elif o in ('-o', '--xlsFileW'):
+            xlsFileW = v
+        elif o in ('-d', '--srcRoot'):
+            srcRoot = v
+        elif o in ('l', '--checkList'):
+            checkList = v.split("/")
+    for o in ('xlsFileR', 'srcRoot', 'xlsFileW'):
+        if not o in dir():
+            print("Error: option not specified: "+o)
+            printUsage()
+            sys.exit(1)
+    for o in ('xlsFileR', 'srcRoot'):
+        v = locals()[o]
+        if not os.path.exists(v):
+            print("Error: path does not exist: "+v)
+            printUsage()
+            sys.exit(1)
+    if not 'checkList' in dir():
+        checkList=os.listdir(srcRoot)
+    if not checkList: # empty checkList
+        print("Error: empty checkList")
+        printUsage()
+        sys.exit(1)
+    for v in checkList:
+        if not os.path.exists(srcRoot+"/"+v):
+            print("Error: folder does not exist: "+v)
+            printUsage()
+            sys.exit(1)
+    return (xlsFileR, xlsFileW, srcRoot, checkList)
+
 class RecgInfo:
     # __slots__ = ("startRecg", "endRecg", "endParse", "recgCost", "recgStatus",
     #     "score", "parseCost")
@@ -652,6 +708,51 @@ def writeCaseMap(mCaseDict, mInfoDict, mList, mWorkSheet):
         objX.printResult(mWorkSheet, x)
         print(os.linesep)
 
+def concurrentGroupJob(iObjMarks, iOriList, iStr):
+    resList = []
+    for (iObj, iMark) in iObjMarks:
+        for mLine in iOriList:
+            if (-1 != mLine.find("frameID: " + str(iMark) + ' ')):
+                if (-1 != mLine.find("recoBad")):
+                    epTime = int(mLine.split("|D||")[0])
+                    rs = "NA"
+                    confidence = float(-1)
+                    iObj.setEP(epTime, rs, confidence)
+                    iObj.setET(epTime, "recoBad")
+                    iObj.setRecgValid(False)
+                elif (-1 != mLine.find("recoParse")):
+                    epTime = int(mLine.split("|D||")[0])
+                    rs = mLine.split(" ID: ")[1].split(" score:")[0]
+                    confidence = float(mLine.split(" score:")[1])
+                    iObj.setEP(epTime, rs, confidence)
+                    iObj.setET(epTime, "recoParse")
+                    iObj.setRecgValid(True)
+                elif (-1 != mLine.find("status: loadingStart")):
+                    stTime = int(mLine.split("|D||")[0])
+                    iObj.setST(stTime)
+                    iObj.setET(stTime, "loadingStart")
+                elif (-1 != mLine.find("status: detectStart")):
+                    sdTime = int(mLine.split("|D||")[0])
+                    iObj.setSD(sdTime)
+                    iObj.setET(sdTime, "detectStart")
+                elif (-1 != mLine.find("status: detectEnd")):
+                    edTime = int(mLine.split("|D||")[0])
+                    facesCnt = int(mLine.split("faceNum: ")[1])
+                    iObj.setED(edTime, facesCnt)
+                    iObj.setET(edTime, "detectEnd")
+                elif (-1 != mLine.find("status: recoStart")):
+                    srTime = int(mLine.split("|D||")[0])
+                    iObj.setSR(srTime)
+                    iObj.setET(srTime, "recoStart")
+                elif (-1 != mLine.find("status: recoEnd")):
+                    erTime = int(mLine.split("|D||")[0])
+                    iObj.setER(erTime)
+                    iObj.setET(erTime, "recoEnd")
+        resList.append((iMark, iObj))
+    sys.stdout.write(iStr)
+    sys.stdout.flush()
+    return resList
+
 def concurrentJob(iObj, iOriList, iMark, iStr):
     # print(iObj.frameID)
     for mLine in iOriList:
@@ -696,170 +797,199 @@ def concurrentJob(iObj, iOriList, iMark, iStr):
     return iMark, iObj
 
 ### Params region
-xlsFileR = "/home/devin/Desktop/TestResults/FrSet2018.xlsx"
-xlsFileW = "/home/devin/Desktop/TestResultXlsx/InterimData.xlsx"
-srcRoot = "/home/devin/Desktop/TestResults/"
-checkList = ["daiyi", "baoyuandong", "sunhaiyan", "xinglj", "peiyi", "zhuyawen"]
-checkList += ["yukeke", "yanchangjian", "guangming"]
+if __name__ == '__main__':
+    print(sys.version)
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
+    strStartTime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+    startTime = time.time()
 
-futuresList = []
-executor = ProcessPoolExecutor(max_workers = 36)
-
-### Job region
-nameCaseDict = {}
-caseFfoTsDict = {}   # FfoTs: First face occurrence Time stamp
-if os.path.isfile(xlsFileR):
-    wb = load_workbook(filename = xlsFileR)
-else:
-    print("No xls files for reading!!!")
-    sys.exit(0)
-
-print(wb.sheetnames)
-for it in wb.sheetnames:
-    nameCase = []
-    sheet = wb[it]
-    for x in range(2, 46):
-        tmp = sheet.cell(x, 5).value
-        if (None != tmp):
-            nameCase.append(str(tmp))
-            tmpTuple = (it, str(tmp))
-            caseFfoTsDict[tmpTuple] = str(sheet.cell(x, 7).value)
-    nameCaseDict[it] = nameCase
-
-# print("caseFfoTsDict:")
-# print(len(caseFfoTsDict.keys()))
-# for it in caseFfoTsDict.keys():
-#     if ("0830111811" in it):
-#         print(it)
-#         print(caseFfoTsDict[it])
-# sys.exit(0)
-
-# print("nameCaseDict:")
-# for it in nameCaseDict.keys():
-#     print(it)
-#     obj = nameCaseDict.get(it)
-#     print(obj)
-# sys.exit(0)
-
-if os.path.isfile(xlsFileW):
-    wb = load_workbook(filename = xlsFileW)
-else:
-    wb = Workbook()
-
-for suffix in checkList:
-    ws = wb.create_sheet("newsheet", 0)
-    ws["A1"] = "视频片段编号"
-    ws["A2"] = "视频片段总帧数"
-    ws["A3"] = "测试所用帧数"
-    ws["A4"] = "检测有效帧数"
-    ws["A5"] = "识别次(帧)数"
-    ws["A6"] = "有效识别次(帧)数"
-    ws["A7"] = "有效识别率"
-    ws["A8"] = "最大单帧加载耗时(ms)"
-    ws["A9"] = "最大单帧检测耗时(ms)"
-    ws["A10"] = "最大识别(含无效识别)耗时(ms)"
-    ws["A11"] = "最大有效识别耗时(ms)"
-    ws["A12"] = "最大无效识别耗时(ms)"
-    ws["A13"] = "最大解析耗时(ms)"
-    ws["A14"] = "平均单帧加载耗时(ms)"
-    ws["A15"] = "平均单帧检测耗时(ms)"
-    ws["A16"] = "平均识别(含无效识别)耗时(ms)"
-    ws["A17"] = "平均有效识别耗时(ms)"
-    ws["A18"] = "平均无效识别耗时(ms)"
-    ws["A19"] = "平均解析耗时(ms)"
-    ws["A20"] = "主观耗时(ms):首识别-人出现 时差"
-    ws["A21"] = "主观耗时(ms):首检测-人出现 时差"
-    ws["A22"] = "主观耗时(ms):首识别-首检测 时差"
-    ws["A23"] = "有效帧识别正确率"
-    ws["A24"] = "退出等待耗时(ms)"
-    ws["A25"] = "识别队列剩余"
-    ws["A26"] = "识别结果全返回"
-    ws["A27"] = "2秒内识别正确次数"
-    ws["A28"] = "5秒内识别正确次数"
-    ws["A29"] = "15秒内识别正确次数"
-    ws["A30"] = "识别正确-人出现 最短耗时"
-    ws["A31"] = "首正确识别测试帧"
-    ws["A32"] = "首正确识别测试帧序号"
-
-    ws.column_dimensions[get_column_letter(1)].width = 34
-    for i in range(2, 40):
-        ws.column_dimensions[get_column_letter(i)].width = 18
-
-    singleRoot = srcRoot + suffix + '/'
-    futuresList = []
-    oriList = []
-    infoDict = {}
-    caseDict = {}
-    if os.path.exists(singleRoot):
-        for rt, dirs, files in os.walk(singleRoot):
-            for name in files:
-                print("ORI: " + os.path.join(rt, name))
-                with open(os.path.join(rt, name), 'r') as f:
-                    tmpList = f.readlines()
-                for line in tmpList:
-                    oriList.append(line)
-        for line in oriList:
-            if -1 != line.find("file: "):
-                tmpStr = line.split("file: ")[1].split(" status:")[0]
-                if ("null" == tmpStr):
-                    print("One case finish~")
-                else:
-                    elTime = int(line.split("|D||")[0])
-                    dictKey = int(line.split("frameID: ")[1].split("file: ")[0])
-                    cID = line.split("/")[3]
-                    fn = line.split("/")[4].split(" status:")[0]
-                    sn = int(line.split("fileSN: ")[-1])
-                    tmpStr = tmpStr.split("/")[-1]
-                    tmpObj = LogInfo(dictKey, tmpStr, sn)
-                    tmpObj.setEL(elTime, cID, fn)
-                    tmpObj.setET(elTime, "loadingEnd")
-                    infoDict[dictKey] = tmpObj
+    if False:
+        xlsFileR, xlsFileW, srcRoot, checkList = parseOpt()
     else:
-        print("No Source!!!")
+        xlsFileR = "/home/devin/Desktop/G200/FrSet2018.xlsx"
+        xlsFileW = "/home/devin/Desktop/G200/RoiChange/bigger2/newInterimData.xlsx"
+        srcRoot = "/home/devin/Desktop/G200/RoiChange/bigger2/"
+        checkList = ["zhuyawen", "xinglj", "baoyuandong", "daiyi", \
+            "peiyi", "sunhaiyan"]
+
+    futuresList = []
+    executor = ProcessPoolExecutor(max_workers = 36)
+
+    ### Job region
+    nameCaseDict = {}
+    caseFfoTsDict = {}   # FfoTs: First face occurrence Time stamp
+    if os.path.isfile(xlsFileR):
+        wb = load_workbook(filename = xlsFileR)
+    else:
+        print("No xls files for reading!!!")
         sys.exit(0)
 
-    index = 0
-    for it in infoDict.keys():
-        index += 1
-        tmpS = "\r" + str(index) + '/' + str(len(infoDict.keys()))
-        obj = infoDict.get(it)
-        future = executor.submit(concurrentJob, obj, oriList, it, tmpS)
+    print(wb.sheetnames)
+    for it in wb.sheetnames:
+        nameCase = []
+        sheet = wb[it]
+        for x in range(2, 46):
+            tmp = sheet.cell(x, 5).value
+            if (None != tmp):
+                nameCase.append(str(tmp))
+                tmpTuple = (it, str(tmp))
+                caseFfoTsDict[tmpTuple] = str(sheet.cell(x, 7).value)
+        nameCaseDict[it] = nameCase
+
+    # print("caseFfoTsDict:")
+    # print(len(caseFfoTsDict.keys()))
+    # for it in caseFfoTsDict.keys():
+    #     if ("0830111811" in it):
+    #         print(it)
+    #         print(caseFfoTsDict[it])
+    # sys.exit(0)
+
+    # print("nameCaseDict:")
+    # for it in nameCaseDict.keys():
+    #     print(it)
+    #     obj = nameCaseDict.get(it)
+    #     print(obj)
+    # sys.exit(0)
+
+    if os.path.isfile(xlsFileW):
+        wb = load_workbook(filename = xlsFileW)
+    else:
+        wb = Workbook()
+
+    for suffix in checkList:
+        ws = wb.create_sheet("newsheet", 0)
+        ws["A1"] = "视频片段编号"
+        ws["A2"] = "视频片段总帧数"
+        ws["A3"] = "测试所用帧数"
+        ws["A4"] = "检测有效帧数"
+        ws["A5"] = "识别次(帧)数"
+        ws["A6"] = "有效识别次(帧)数"
+        ws["A7"] = "有效识别率"
+        ws["A8"] = "最大单帧加载耗时(ms)"
+        ws["A9"] = "最大单帧检测耗时(ms)"
+        ws["A10"] = "最大识别(含无效识别)耗时(ms)"
+        ws["A11"] = "最大有效识别耗时(ms)"
+        ws["A12"] = "最大无效识别耗时(ms)"
+        ws["A13"] = "最大解析耗时(ms)"
+        ws["A14"] = "平均单帧加载耗时(ms)"
+        ws["A15"] = "平均单帧检测耗时(ms)"
+        ws["A16"] = "平均识别(含无效识别)耗时(ms)"
+        ws["A17"] = "平均有效识别耗时(ms)"
+        ws["A18"] = "平均无效识别耗时(ms)"
+        ws["A19"] = "平均解析耗时(ms)"
+        ws["A20"] = "主观耗时(ms):首识别-人出现 时差"
+        ws["A21"] = "主观耗时(ms):首检测-人出现 时差"
+        ws["A22"] = "主观耗时(ms):首识别-首检测 时差"
+        ws["A23"] = "有效帧识别正确率"
+        ws["A24"] = "退出等待耗时(ms)"
+        ws["A25"] = "识别队列剩余"
+        ws["A26"] = "识别结果全返回"
+        ws["A27"] = "2秒内识别正确次数"
+        ws["A28"] = "5秒内识别正确次数"
+        ws["A29"] = "15秒内识别正确次数"
+        ws["A30"] = "识别正确-人出现 最短耗时"
+        ws["A31"] = "首正确识别测试帧"
+        ws["A32"] = "首正确识别测试帧序号"
+
+        ws.column_dimensions[get_column_letter(1)].width = 34
+        for i in range(2, 40):
+            ws.column_dimensions[get_column_letter(i)].width = 18
+
+        singleRoot = srcRoot + '/' + suffix + '/'
+        futuresList = []
+        oriList = []
+        infoDict = {}
+        caseDict = {}
+        if os.path.exists(singleRoot):
+            for rt, dirs, files in os.walk(singleRoot):
+                for name in files:
+                    print("ORI: " + os.path.join(rt, name))
+                    with open(os.path.join(rt, name), 'r', encoding = 'UTF-8') as f:
+                        tmpList = f.readlines()
+                    for line in tmpList:
+                        oriList.append(line)
+            for line in oriList:
+                if -1 != line.find("file: "):
+                    tmpStr = line.split("file: ")[1].split(" status:")[0]
+                    if ("null" == tmpStr):
+                        print("One case finish~")
+                    else:
+                        elTime = int(line.split("|D||")[0])
+                        dictKey = int(line.split("frameID: ")[1].split("file: ")[0])
+                        cID = line.split("/")[3]
+                        fn = line.split("/")[4].split(" status:")[0]
+                        sn = int(line.split("fileSN: ")[-1])
+                        tmpStr = tmpStr.split("/")[-1]
+                        tmpObj = LogInfo(dictKey, tmpStr, sn)
+                        tmpObj.setEL(elTime, cID, fn)
+                        tmpObj.setET(elTime, "loadingEnd")
+                        infoDict[dictKey] = tmpObj
+        else:
+            print("No Source!!!")
+            sys.exit(0)
+
+        index = 0
+        groupsize = 500
+        objMarkList = []
+        its = []
+        for it in infoDict.keys():
+            index += 1
+            tmpS = str(index) + '/' + str(len(infoDict.keys())) + "\n"
+            obj = infoDict.get(it)
+
+            objMarkList.append((obj, it))
+
+            (d, m) = divmod(index, groupsize)
+            if 0 == m:
+                future = executor.submit(concurrentGroupJob, objMarkList, oriList, tmpS)
+                futuresList.append(future)
+                objMarkList = []
+        future = executor.submit(concurrentGroupJob, objMarkList, oriList, tmpS)
         futuresList.append(future)
 
-    wait(futuresList)
-    for future in futuresList:
-        tmpT = future.result()
-        infoDict[tmpT[0]] = tmpT[1]
+        wait(futuresList)
+        for future in futuresList:
+            resList = future.result()
+            for tmpT in resList:
+                infoDict[tmpT[0]] = tmpT[1]
 
-    printDict(infoDict)
-    caseDict = getCaseDict(infoDict, nameCaseDict, oriList, caseFfoTsDict)
-    writeCaseMap(caseDict, infoDict, oriList, ws)
+        midTime = time.time()
+        strMidTime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+        printDict(infoDict)
+        caseDict = getCaseDict(infoDict, nameCaseDict, oriList, caseFfoTsDict)
+        writeCaseMap(caseDict, infoDict, oriList, ws)
 
-    print("Lines in all files: " + str(len(oriList)))
-    print("Valid frames num: " + str(len(infoDict)))
+        print("Lines in all files: " + str(len(oriList)))
+        print("Valid frames num: " + str(len(infoDict)))
 
-wbws = wb.create_sheet("caseIndex", 0)
-for i in range(1, 5):
-    wbws.column_dimensions[get_column_letter(i)].width = 6
-for i in range(5, 40):
-    wbws.column_dimensions[get_column_letter(i)].width = 14
+    wbws = wb.create_sheet("caseIndex", 0)
+    for i in range(1, 5):
+        wbws.column_dimensions[get_column_letter(i)].width = 6
+    for i in range(5, 40):
+        wbws.column_dimensions[get_column_letter(i)].width = 14
 
-wbl = load_workbook(filename = xlsFileR)
-sheet = wbl[wbl.sheetnames[0]]
-for row in range(1, 46):
-    for col in range(1, 5):
-        wbws.cell(row, col).value = sheet.cell(row, col).value
+    wbl = load_workbook(filename = xlsFileR)
+    sheet = wbl[wbl.sheetnames[0]]
+    for row in range(1, 46):
+        for col in range(1, 5):
+            wbws.cell(row, col).value = sheet.cell(row, col).value
 
-for it in wbl.sheetnames:
-    sheet = wbl[it]
-    addEntriesCol = wbws.max_column + 1
-    addEntriesRow = 1
-    wbws.cell(addEntriesRow, addEntriesCol).value = it
-    for thing in sheet['E2' : 'E45']:
-        addEntriesRow += 1
-        wbws.cell(addEntriesRow, addEntriesCol).value = thing[0].value
+    for it in wbl.sheetnames:
+        sheet = wbl[it]
+        addEntriesCol = wbws.max_column + 1
+        addEntriesRow = 1
+        wbws.cell(addEntriesRow, addEntriesCol).value = it
+        for thing in sheet['E2' : 'E45']:
+            addEntriesRow += 1
+            wbws.cell(addEntriesRow, addEntriesCol).value = thing[0].value
 
-wb.save(xlsFileW)
+    wb.save(xlsFileW)
 
-print(os.linesep)
-print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
+    print(os.linesep)
+    strEndTime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+    endTime = time.time()
+    print("Start: " + strStartTime)
+    print("Mid: " + strMidTime)
+    print("End: " + strEndTime)
+    print("Mid: {0:,.0f}".format(midTime - startTime))
+    print("Total: {0:,.0f}".format(endTime - startTime))

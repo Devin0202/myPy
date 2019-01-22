@@ -6,14 +6,17 @@ import sys
 import os
 import time
 
-print(sys.version)
-print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
+### Definition region(Class, Functions, Constants)
 
-### Defs region
+if "__main__" == __name__:
+    print(sys.version)
+    timeStampFormat = "%Y-%m-%d %H:%M:%S"
+    print(time.strftime(timeStampFormat, time.localtime()))
+    ### Parameters region
 
-### Params region
+    ### Job region
+    print("Do something here~")
+    pass
 
-### Job region
-
-print(os.linesep)
-print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
+    print(os.linesep)
+    print(time.strftime(timeStampFormat, time.localtime()))
