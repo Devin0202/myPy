@@ -18,17 +18,19 @@ rows = 720
 # rows = 480
 # cols = 222
 # rows = 222
-srcRoot = "/media/devin/OpenImage600/face2/"
-dstRoot = "/media/devin/OpenImage600/facesVisiable90/"
+needVideo = False
+srcRoot = "/media/devin/OpenImage600/faces/"
+dstRoot = "/media/devin/OpenImage600/facesPng90/"
 suffix = ".nv21"
 lenSuffix = len(suffix)
 fileBytes = cols * rows * 3 / 2
-# cvImgSaver = [int(cv2.IMWRITE_PNG_COMPRESSION), 3]
-cvImgSaver = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+
+cvImgSaver = [int(cv2.IMWRITE_PNG_COMPRESSION), 90]
+suffixReplace = ".png"
+# cvImgSaver = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+# suffixReplace = ".jpg"
+
 index = 0
-
-needVideo = False
-
 dstList = []
 if os.path.exists(srcRoot):
     for rt, dirs, files in os.walk(srcRoot):
@@ -44,7 +46,7 @@ if os.path.exists(srcRoot):
                 imgYuv = np.fromstring(oriData, dtype = np.uint8)
                 imgYuv = np.reshape(imgYuv, (-1, cols))
                 imgBgr = cv2.cvtColor(imgYuv, cv2.COLOR_YUV2BGR_NV21)
-                store = name.replace(suffix, ".jpg")
+                store = name.replace(suffix, suffixReplace)
                 store = os.path.join(rt, store)
                 store = store.replace(srcRoot, dstRoot)
                 storeRoute = os.path.split(store)

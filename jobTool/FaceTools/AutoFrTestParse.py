@@ -45,7 +45,7 @@ def parseOpt():
             xlsFileW = v
         elif o in ('-d', '--srcRoot'):
             srcRoot = v
-        elif o in ('l', '--checkList'):
+        elif o in ('-l', '--checkList'):
             checkList = v.split("/")
     for o in ('xlsFileR', 'srcRoot', 'xlsFileW'):
         if not o in dir():
