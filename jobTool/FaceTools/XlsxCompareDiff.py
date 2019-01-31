@@ -17,6 +17,24 @@ print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
 ### Defs region
 def diffTool(iWws, iW0rs, iW1rs, iCase, iEndRow):
     maxColumn = iWws.max_column + 1
+
+    findA = False
+    findB = False
+    for c in range(2, iW0rs.max_column + 1):
+        if iCase == iW0rs.cell(1, c).value:
+            findA = True
+        else:
+            pass
+    for c in range(2, iW1rs.max_column + 1):
+        if iCase == iW1rs.cell(1, c).value:
+            findB = True
+        else:
+            pass
+    if findA and findB:
+        pass
+    else:
+        return
+
     for c in range(2, iW0rs.max_column + 1):
         if iCase == iW0rs.cell(1, c).value:
             for r in range(1, iEndRow + 1):
@@ -41,8 +59,9 @@ def diffTool(iWws, iW0rs, iW1rs, iCase, iEndRow):
                     if iWws.cell(r, maxColumn).value == iW1rs.cell(r, c).value:
                         continue
                     else:
-                        iWws.cell(r, maxColumn).value += \
-                            ("-" + iW1rs.cell(r, c).value)
+                        iWws.cell(r, maxColumn).value = \
+                        str(iWws.cell(r, maxColumn).value) \
+                        + "-" + str(iW1rs.cell(r, c).value)
                         font = Font(color = "DD0000")
                         iWws.cell(r, maxColumn).font = font
                 # fill = PatternFill("solid", fgColor = "AA0000")
@@ -96,7 +115,10 @@ def loadAB(iA, iB, iIndexSheet, iHint):
 
         for r in fMatchRows:
             for c in range(5, fWrs.max_column + 1):
-                fMatchCases.append(fWrs.cell(r, c).value)
+                if (None != fWrs.cell(r, c).value):
+                    fMatchCases.append(fWrs.cell(r, c).value)
+                else:
+                    pass
 
         fWrs = fW1r[indexSheet]
         fMatchRows = []
@@ -110,7 +132,9 @@ def loadAB(iA, iB, iIndexSheet, iHint):
         listLen = 0
         for r in fMatchRows:
             for c in range(5, fWrs.max_column + 1):
-                if fWrs.cell(r, c).value in fMatchCases:
+                if (None == fWrs.cell(r, c).value):
+                    continue
+                elif fWrs.cell(r, c).value in fMatchCases:
                     listLen += 1
                     continue
                 else:

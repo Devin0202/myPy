@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Convert NV21 to png
+Language:   python3
+Goal:       Convert NV21 to jpg or png
 """
 import os
 import sys
@@ -16,19 +17,19 @@ cols = 1280
 rows = 720
 # cols = 640
 # rows = 480
-# cols = 222
-# rows = 222
+# cols = 640
+# rows = 720
 needVideo = False
-srcRoot = "/media/devin/OpenImage600/faces/"
-dstRoot = "/media/devin/OpenImage600/facesPng90/"
+srcRoot = "/home/devin/Downloads/tmp/test/"
+dstRoot = "/home/devin/Downloads/tmp/testJpg/"
 suffix = ".nv21"
 lenSuffix = len(suffix)
 fileBytes = cols * rows * 3 / 2
 
-cvImgSaver = [int(cv2.IMWRITE_PNG_COMPRESSION), 90]
-suffixReplace = ".png"
-# cvImgSaver = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
-# suffixReplace = ".jpg"
+# cvImgSaver = [int(cv2.IMWRITE_PNG_COMPRESSION), 90]
+# suffixReplace = ".png"
+cvImgSaver = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+suffixReplace = ".jpg"
 
 index = 0
 dstList = []

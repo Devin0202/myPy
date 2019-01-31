@@ -12,9 +12,9 @@ if "__main__" == __name__:
     print(sys.version)
     timeStampFormat = "%Y-%m-%d %H:%M:%S"
     print(time.strftime(timeStampFormat, time.localtime()))
-    ### Parameters region
+### Parameters region
 
-    ### Job region
+### Job region
     print("Do something here~")
     pass
 

@@ -915,7 +915,7 @@ if __name__ == '__main__':
                         print("One case finish~")
                     else:
                         elTime = int(line.split("|D||")[0])
-                        dictKey = int(line.split("frameID: ")[1].split("file: ")[0])
+                        dictKey = str(line.split("frameID: ")[1].split(" file: ")[0])
                         cID = line.split("/")[3]
                         fn = line.split("/")[4].split(" status:")[0]
                         sn = int(line.split("fileSN: ")[-1])

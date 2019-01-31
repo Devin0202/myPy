@@ -180,10 +180,35 @@ for obj in objs:
                     timeoutLimit = 0
                     break
                 else:
+                    avgFreq = 0;
                     localCnt += 1
                     logWriter.printLog("App running: " + str(output))
                     cmd = "adb" + cAdbDevices + "shell input keyevent 224"
                     safeExecute(cmd, "Running-Invoke cmd status: ", 2)
+
+                    prefix = "/sys/devices/system/cpu/"
+                    suffix = "/cpufreq/cpuinfo_cur_freq"
+                    cmd = "adb" + cAdbDevices + "shell cat " + prefix + "cpu0" \
+                            + suffix
+                    output = safeExecute(cmd, "get__cur_freq0: ", 2)
+                    avgFreq += int(output)
+                    cmd = "adb" + cAdbDevices + "shell cat " + prefix + "cpu1" \
+                            + suffix
+                    output = safeExecute(cmd, "get__cur_freq1: ", 2)
+                    avgFreq += int(output)
+                    cmd = "adb" + cAdbDevices + "shell cat " + prefix + "cpu2" \
+                            + suffix
+                    output = safeExecute(cmd, "get__cur_freq2: ", 2)
+                    avgFreq += int(output)
+                    cmd = "adb" + cAdbDevices + "shell cat " + prefix + "cpu3" \
+                            + suffix
+                    output = safeExecute(cmd, "get__cur_freq3: ", 2)
+                    avgFreq += int(output)
+
+                    logWriter.printLog("cpuinfo_cur_freq: " + str(avgFreq / 4))
+                    cmd = "adb" + cAdbDevices + "shell cat /sys/devices/system/cpu/online"
+                    output = safeExecute(cmd, "get_cpu_online: ", 2)
+                    logWriter.printLog("Cpu_online: " + str(output))
                     time.sleep(10)
 
                     if (90 < localCnt):

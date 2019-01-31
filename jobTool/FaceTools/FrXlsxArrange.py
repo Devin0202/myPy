@@ -92,6 +92,8 @@ for it in wr.sheetnames:
                         wrs.cell(r, c).value
                     writeRow += 1
 
+                wws.cell(writeRow, writeCol).value = "NA"
+                wws.cell(writeRow, 1).value = "得分"
                 for r in range(individuleStartRow, wrs.max_row + 1):
                     tmpS = wrs.cell(r, c).value
                     if None != tmpS and -1 != tmpS.find("-correct"):
@@ -117,7 +119,6 @@ for it in wr.sheetnames:
                         str(round(tmpI / float(totalCorrectCnt), 2))
 
 cMax = wws.max_column + 1
-
 wws.cell(1, cMax).value = "Average"
 wws.cell(1, cMax + 2).value = "NA rate"
 for r in range(2, 13):
