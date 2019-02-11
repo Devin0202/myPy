@@ -126,6 +126,7 @@ cLocalResults = "/home/devin/Downloads/tmp/"
 recordLogFolder = "/home/devin/Downloads/tmp"
 isDos = False
 isSDmode = False
+isFullCase = False
 
 folderDoneList = \
 []
@@ -133,6 +134,13 @@ logWriter = EasyLog(recordLogFolder)
 ### Job region
 logWriter.printLog(sys.version)
 logWriter.printLog(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
+
+if isFullCase:
+    cmd = "adb" + cAdbDevices + "shell setprop debug.test.full T"
+else:
+    cmd = "adb" + cAdbDevices + "shell setprop debug.test.full F"
+safeExecute(cmd, "FullCase setting status: ", 2)
+
 for obj in objs:
     dirs = []
     logWriter.printLog(obj)
