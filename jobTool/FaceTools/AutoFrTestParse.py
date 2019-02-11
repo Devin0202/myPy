@@ -59,7 +59,11 @@ def parseOpt():
             printUsage()
             sys.exit(1)
     if not 'checkList' in dir():
-        checkList=os.listdir(srcRoot)
+        checkList=[]
+        dirlist=os.listdir(srcRoot)
+        for v in dirlist:
+            if os.path.isdir(srcRoot+"/"+v):
+                checkList.append(v)
     if not checkList: # empty checkList
         print("Error: empty checkList")
         printUsage()

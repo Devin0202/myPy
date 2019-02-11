@@ -11,16 +11,70 @@ from openpyxl import load_workbook
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
+# Command line option handling
+import getopt
+def printUsage():
+    print(u"""
+Usage:
+-h/--help:      show this help message
+-i/--xlsFileR:  interim result excel file (.xlsx) path
+-o/--xlsFileW:  output excel file (.xlsx) path
+-g/--hint:      only process data matching the hint such as "普", "正,1m"
+
+E.g.:
+$>python [this.script] -i ./facerecog-interim-result.xlsx -g 正,1m
+  -o ./facerecog-final-result.xlsx
+""")
+
+def parseOpt():
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:o:g:', \
+                ['help', 'xlsFileR=', 'xlsFileW=', 'hint='])
+    except getopt.GetoptError as err:
+        print(str(err))
+        sys.exit(1)
+    for o, v in opts:
+        if o in ('-h', '--help'):
+            printUsage()
+            sys.exit(1)
+        elif o in ('-i', '--xlsFileR'):
+            xlsFileR = v
+        elif o in ('-o', '--xlsFileW'):
+            xlsFileW = v
+        elif o in ('-g', '--hint'):
+            hint = v.split(",")
+    for o in ('xlsFileR', 'xlsFileW'):
+        if not o in dir():
+            print("Error: option not specified: "+o)
+            printUsage()
+            sys.exit(1)
+    for o in (['xlsFileR']):
+        v = locals()[o]
+        if not os.path.exists(v):
+            print("Error: path does not exist: "+v)
+            printUsage()
+            sys.exit(1)
+    print(xlsFileR)
+    print(xlsFileW)
+    if 'hint' in dir():
+        print(hint)
+        return (xlsFileR, xlsFileW, hint)
+    else:
+        return (xlsFileR, xlsFileW, [])
+
 print(sys.version)
 print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
 
 ### Defs region
 
 ### Params region
-xlsFileR = "/home/devin/Desktop/TestResultXlsx/InterimData.xlsx"
-indexSheet = "caseIndex"
-hint = ["3m", "正", "普"]
-xlsFileW = "/home/devin/Desktop/TestResultXlsx/AllData.xlsx"
+if False:
+    xlsFileR, xlsFileW, hint = parseOpt()
+else:
+    indexSheet = "caseIndex"
+    xlsFileR = "/home/devin/Desktop/TestResultXlsx/InterimData.xlsx"
+    xlsFileW = "/home/devin/Desktop/TestResultXlsx/AllData.xlsx"
+    hint = ["3m", "正", "普"]
 
 needRowsInfo = ["视频片段编号", "检测", "识别正确", "识别有效率", "首识别-首检测 时差", \
 "首检测-人出现 时差", "响应时间(ms)", "2秒内正确识别率", "5秒内正确识别率", \
@@ -121,6 +175,7 @@ for it in wr.sheetnames:
 cMax = wws.max_column + 1
 wws.cell(1, cMax).value = "Average"
 wws.cell(1, cMax + 2).value = "NA rate"
+
 for r in range(2, 13):
     totalF = 0.0
     cntNA = 0
