@@ -182,12 +182,15 @@ def addFaces(key, secret, setID, folder, tokenMapping):
                     else:
                         print(absoluteRoute + " token: " + rtToken)
                         addSingleFace(mKey, mSecret, mSetID, rtToken, False)
-                        tmpStr = '\"' + rtToken + '\"' + ", \"" + name.split('.')[0] + '\"'
-                        lineList.append(tmpStr)
+                        # tmpStr = '\"' + rtToken + '\"' + ", \"" + name.split('.')[0] + '\"'
+                        # lineList.append(tmpStr)
+                        tmpStr1 = rtToken + ", " + name.split('.')[0]
+                        lineList.append(tmpStr1)
 
         with open(tokenMapping, 'w') as fw:
             for sl in lineList:
-                fw.write("faceName.put(" + sl + ");" + "\r\n")
+                # fw.write("faceName.put(" + sl + ");" + "\r\n")
+                fw.write(sl + "\r\n")
     else:
         print("No Source!!!")
         sys.exit(0)
@@ -222,6 +225,19 @@ mTokenMapping = "/home/devin/Desktop/faceMap2.txt"
 
 mKey = "6uekRquo16PxOV9qTju6N08m4Iv3ypem"
 mSecret = "hqQF28bU8sGIlfLWHBKmnVdLE6Tz0AlK"
+# fubingrui
+mKey = "3I0OedcG4h6EU5IWjTFPDbLuY2kfxmI2"
+mSecret = "ydA72kvXnE4bVUrCAd4NQ7nao81grCl_"
+# daiyi
+mKey = "a8szsmCX56vEE_mGiR8AStEKxq1eNVQG";
+mSecret = "lGdT7Lz6Jrd21oZPV_fAZu0zTXjyUdJ9";
+# zhangjianwei
+mKey = "8uX7p9Iut54JkVoKO5YcKu1D5PHYJNkh";
+mSecret = "lD2fzPwuywjS0gN8kPZcZnD0CQjCrn9v";
+# liuxia
+mKey = "YThLsOkPGrx9KNXBSc3Wll9TqeaW1Mht";
+mSecret = "8a9ksNSKSgG2W_YYI5zSJN8NoiyPXmr8";
+
 mSetID = "HisceneTest0704"
 mCreateInfo = "Faces registered by python3 requests"
 

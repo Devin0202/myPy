@@ -137,7 +137,7 @@ def saveRects(fImg, fDst, fDate, fReplace):
 
     return fImg
 
-def concurrentJob(fTmpS, fOriData, fObj):
+def concurrentJob(fTmpS, fOriData, fObj, fNeed = True):
     fTmpS = fTmpS.replace(suffix, ".jpg")
     store = saveAssist(fTmpS, dataFolder, dstImgRoot)
     storeWhole = saveAssist(store, level3Folder, fullImgFolder)
@@ -149,8 +149,11 @@ def concurrentJob(fTmpS, fOriData, fObj):
         imgBgr = cv2.imread(store, cv2.IMREAD_COLOR)
 
     saveRects(imgBgr, store, fObj, level3Folder)
-    cv2.imwrite(store, imgBgr, cvImgSaver)
-    cv2.imwrite(storeWhole, imgBgr, cvImgSaver)
+    if fNeed:
+        cv2.imwrite(store, imgBgr, cvImgSaver)
+        cv2.imwrite(storeWhole, imgBgr, cvImgSaver)
+    else:
+        pass
 
 ### Params region
 logFolder = "/home/devin/Desktop/TestResults/"
@@ -167,11 +170,12 @@ dstImgRoot = "/home/devin/Desktop/tmpPng/"
 suffix = ".nv21"
 fileBytes = cols * rows * 3 / 2
 cvImgSaver = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+needFullImage = False
 
 ### Job region
 if __name__ == '__main__':
     futuresList = []
-    executor = ProcessPoolExecutor(max_workers = 3)
+    executor = ProcessPoolExecutor(max_workers = 16)
     for obj in objs:
         oriData = None
         tmpList = []
@@ -202,7 +206,7 @@ if __name__ == '__main__':
             if -1 != line.find("status: recgValidRoi"):
                 tmpR, idx = getRectInfo(line, rectsMap)
                 tmpR.faceName = line.split()[10]
-                tmpR.recgScore = float(line.split()[12])
+                tmpR.recgScore = float(line.split(" score: ")[1])
 
                 if -1 != tmpR.faceName.find(nameMap.get(obj)):
                     rectsMap.get(idx).recgRectsC.append(tmpR)
@@ -236,7 +240,8 @@ if __name__ == '__main__':
                             print("Size mismatch: " + tmpS)
                             continue
 
-                    future = executor.submit(concurrentJob, tmpS, oriData, objX)
+                    future = executor.submit(concurrentJob, tmpS, oriData, \
+                        objX, needFullImage)
                     futuresList.append(future)
         else:
             print("No Source!!!")

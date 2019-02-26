@@ -127,6 +127,7 @@ recordLogFolder = "/home/devin/Downloads/tmp"
 isDos = False
 isSDmode = False
 isFullCase = False
+isDirect = True
 
 folderDoneList = \
 []
@@ -140,6 +141,12 @@ if isFullCase:
 else:
     cmd = "adb" + cAdbDevices + "shell setprop debug.test.full F"
 safeExecute(cmd, "FullCase setting status: ", 2)
+
+if isDirect:
+    cmd = "adb" + cAdbDevices + "shell setprop debug.test.direct T"
+else:
+    cmd = "adb" + cAdbDevices + "shell setprop debug.test.direct F"
+safeExecute(cmd, "DirectMode setting status: ", 2)
 
 for obj in objs:
     dirs = []

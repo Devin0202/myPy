@@ -832,12 +832,14 @@ if __name__ == '__main__':
     for it in wb.sheetnames:
         nameCase = []
         sheet = wb[it]
-        for x in range(2, 46):
+        for x in range(2, sheet.max_row + 1):
             tmp = sheet.cell(x, 5).value
             if (None != tmp):
                 nameCase.append(str(tmp))
                 tmpTuple = (it, str(tmp))
                 caseFfoTsDict[tmpTuple] = str(sheet.cell(x, 7).value)
+            else:
+                pass
         nameCaseDict[it] = nameCase
 
     # print("caseFfoTsDict:")
@@ -928,6 +930,8 @@ if __name__ == '__main__':
                         tmpObj.setEL(elTime, cID, fn)
                         tmpObj.setET(elTime, "loadingEnd")
                         infoDict[dictKey] = tmpObj
+                else:
+                    pass
         else:
             print("No Source!!!")
             sys.exit(0)

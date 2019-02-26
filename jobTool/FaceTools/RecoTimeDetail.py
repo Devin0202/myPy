@@ -27,6 +27,11 @@ class SetInfo:
         self.recoFrameId.append(fId)
 
     def addRecoInfoDict(self, fLine):
+        if 0 == len(fLine.strip()):
+            return
+        else:
+            pass
+
         try:
             frameId = fLine.split(' ')[1]
         except BaseException:
@@ -89,7 +94,7 @@ def getSetInfo(fSetDict):
 def getTimeInfo(fSetDict):
     setDict = fSetDict
     patternList = [" status: recoStart", " Http connect start", \
-    " Http connect end", " requestID = ", " Http post start", \
+    " Http connect end", " Set requestID = ", " Http post start", \
     " Http getResponseCode ", " Http post end", " requestID: ", \
     " status: Http Response", " status: recoEnd", " status: detectEnd "]
     for key in setDict.keys():
