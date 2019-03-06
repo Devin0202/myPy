@@ -576,8 +576,8 @@ def getCaseDict(myDict, mNameCaseDict, mOriList, iCaseFfoTsDict):
                     tmp2S = tmpSplits[1]
 
                 if ((-1 != line.find("Running remains: ")) and (-1 != line.find(cID))):
-                    if tmp1I < int(line.split("frameID: ")[1].split(" CaseIndex: ")[0]):
-                        tmp1I = int(line.split("frameID: ")[1].split(" CaseIndex: ")[0])
+                    if tmp1I < int(line.split("frameID: ")[1].split()[0]):
+                        tmp1I = int(line.split("frameID: ")[1].split()[0])
                         tmp3S = line.split("Running remains: ")[1]
 
                 if -1 != line.find("/" + cID + "/"):
@@ -727,7 +727,7 @@ def concurrentGroupJob(iObjMarks, iOriList, iStr):
                 elif (-1 != mLine.find("recoParse")):
                     epTime = int(mLine.split("|D||")[0])
                     rs = mLine.split(" ID: ")[1].split(" score:")[0]
-                    confidence = float(mLine.split(" score:")[1])
+                    confidence = float(mLine.split(" score: ")[1].split()[0])
                     iObj.setEP(epTime, rs, confidence)
                     iObj.setET(epTime, "recoParse")
                     iObj.setRecgValid(True)

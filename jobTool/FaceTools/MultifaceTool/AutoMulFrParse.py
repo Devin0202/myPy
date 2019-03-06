@@ -285,7 +285,7 @@ class InfoCalc:
 
         if None != fSingle.loadCost:
             if None == self.loadMax:
-                self.loadMax = 0
+                self.loadMax = -sys.maxsize
                 self.loadAvg = 0
                 self.loadCnt = 0
             else:
@@ -298,7 +298,7 @@ class InfoCalc:
 
         if None != fSingle.detectCost:
             if None == self.detectMax:
-                self.detectMax = 0
+                self.detectMax = -sys.maxsize
                 self.detectAvg = 0
                 self.detectCnt = 0
             else:
@@ -311,7 +311,7 @@ class InfoCalc:
 
         if None != fSingle.recgCostNmax:
             if None == self.recgMax:
-                self.recgMax = 0
+                self.recgMax = -sys.maxsize
                 self.recgAvg = 0
                 self.recgCnt = 0
             else:
@@ -324,7 +324,7 @@ class InfoCalc:
 
         if None != fSingle.recgCostNmaxValid:
             if None == self.recgVMax:
-                self.recgVMax = 0
+                self.recgVMax = -sys.maxsize
                 self.recgVAvg = 0
                 self.recgVCnt = 0
             else:
@@ -337,7 +337,7 @@ class InfoCalc:
 
         if None != fSingle.recgCostNmaxInvalid:
             if None == self.recgIMax:
-                self.recgIMax = 0
+                self.recgIMax = -sys.maxsize
                 self.recgIAvg = 0
                 self.recgICnt = 0
             else:
@@ -350,7 +350,7 @@ class InfoCalc:
 
         if None != fSingle.parseCostNmax:
             if None == self.parseMax:
-                self.parseMax = 0
+                self.parseMax = -sys.maxsize
                 self.parseAvg = 0
                 self.parseCnt = 0
             else:
@@ -457,6 +457,7 @@ class InfoCalc:
 
 def frameProcess(fStrings):
     earlyRecgStart = None
+    recgIds = []
     recgEach = []
     recgStartNum = 0
     singleOne = InfoSet()
@@ -476,6 +477,7 @@ def frameProcess(fStrings):
             pass
         if " status: recoEnd" in line:
             singleOne.recgNum += 1
+            recgIds.append(line.split(" recoID: ")[1].split()[0])
         else:
             pass
         if " status: recoStart" in line:
@@ -517,8 +519,8 @@ def frameProcess(fStrings):
     else:
         pass
 
-    for i in range(0, singleOne.recgNum):
-        tmpS0 = "recoID: " + str(i)
+    for i in recgIds:
+        tmpS0 = "recoID: " + i
         recgValid = False
         recgST = None
         parseST = None
@@ -680,7 +682,7 @@ def xlsxSetting(fXlsxWb, fTitle):
     ws["A2"] = "日志总行数"
     ws["A3"] = "测试所用帧数"
     ws["A4"] = "测试略过帧数"
-    ws["A5"] = "检测出目标数"
+    ws["A5"] = "检测出置信目标数"
     ws["A6"] = "有效识别数"
     ws["A7"] = "识别数"
     ws["A8"] = "有效识别率"
@@ -714,9 +716,14 @@ def xlsxSetting(fXlsxWb, fTitle):
 
 def testTool(fDict):
     tmp = random.sample(fDict.keys(), 1)[0]
+    tmp = ("0222144758", "603060441")
     print("========Test========")
     print("Case: " + tmp[0])
     print("FrameId: " + tmp[1])
+    if tmp in fDict:
+        print("Key found")
+    else:
+        print("Key not found")
     fDict[tmp].infoPrint()
 
 if "__main__" == __name__:

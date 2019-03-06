@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
+"""
+Language:   python2
+Goal:
+Reference:
+"""
 import os
 import sys
 import time
 import random
 from skimage import io, data, transform
-print time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
 
-srcRootList = ["/home/devin/Desktop/faceOri/yunnan/"]
-dstRootList = ["/home/devin/Desktop/faceOri/yunnanS/"]
+print time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+srcRootList = ["/home/devin/Downloads/tmp/111/"]
+dstRootList = ["/home/devin/Downloads/tmp/111S/"]
 
 rowSize = 720
 colSize = 1280
@@ -47,7 +52,7 @@ else:
                                 #     continue
                                 # dstImg = transform.resize(img, (rowSize, colSize))
                                 dstImg = transform.resize(img, (img.shape[0] / 2, img.shape[1] / 2))
-                                dstImg = transform.resize(img, (img.shape[0] / 2 * 2, img.shape[1] / 2 * 2))
+                                dstImg = transform.resize(img, (img.shape[0] / 4 * 2, img.shape[1] / 4 * 2))
                                 dst = absoluteRoute.replace(srcRoot, dstRoot)
                                 if not os.path.exists(os.path.split(dst)[0]):
                                     os.makedirs(os.path.split(dst)[0])

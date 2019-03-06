@@ -188,6 +188,9 @@ def addFaces(key, secret, setID, folder, tokenMapping):
                         lineList.append(tmpStr1)
 
         with open(tokenMapping, 'w') as fw:
+            fw.write(key + "\r\n")
+            fw.write(secret + "\r\n")
+            fw.write(setID + "\r\n")
             for sl in lineList:
                 # fw.write("faceName.put(" + sl + ");" + "\r\n")
                 fw.write(sl + "\r\n")
