@@ -7,6 +7,7 @@ PS:
 import sys
 import os
 import time
+import timeit
 
 ### Common utilities
 def safeDirectory(fDir):
@@ -39,16 +40,27 @@ def makeDirs(fDir, fExistencePermitted = True):
         print("Create: " + safeDir + "    OK")
         return safeDir
 
-### Definition region(Class, Functions, Constants)
-
-if "__main__" == __name__:
+def globalStart():
     print(sys.version)
     timeStampFormat = "%Y-%m-%d %H:%M:%S"
     print(time.strftime(timeStampFormat, time.localtime()))
+    globalT = timeit.default_timer()
+    return globalT
+
+def globalEnd(fGlobalT):
+    timeStampFormat = "%Y-%m-%d %H:%M:%S"
+    globalElapsed = (timeit.default_timer() - fGlobalT) / 60
+    print(os.linesep)
+    print(time.strftime(timeStampFormat, time.localtime()))
+    print("Finished in {:.2f}m".format(globalElapsed))
+
+### Definition region(Class, Functions, Constants)
+
+if "__main__" == __name__:
+    globalT0 = globalStart()
 ### Parameters region
 
 ### Job region
     print("Do something~")
 
-    print(os.linesep)
-    print(time.strftime(timeStampFormat, time.localtime()))
+    globalEnd(globalT0)
