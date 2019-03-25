@@ -37,8 +37,8 @@ def cropResize(fImg, fCropHW, fResizeWH, fCropTL):
 ### Params region
 srcRoot = "/home/devin/Downloads/tmp/PosR4/old/"
 dstRoot = "/home/devin/Downloads/tmp/PosR4/oldCS/"
-cropSize = (500, 300)
-dstSize = (300, 500)
+cropSizeHw = (500, 300)
+dstSizeWh = (300, 500)
 cropTL = (0.20, 0.38)
 
 if not os.path.exists(dstRoot):
@@ -59,7 +59,8 @@ if os.path.exists(srcRoot):
                     os.makedirs(dstFolder)
                     print(dstFolder)
 
-                dstImg = cropResize(absoluteRoute, cropSize, dstSize, cropTL)
+                dstImg = cropResize(absoluteRoute, cropSizeHw, dstSizeWh, \
+                                    cropTL)
 
                 # img = cv2.imread(absoluteRoute, cv2.IMREAD_COLOR)
                 # retval = cv2.getRotationMatrix2D((img.shape[1] / 2, \
