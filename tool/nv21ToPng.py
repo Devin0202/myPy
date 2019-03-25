@@ -11,17 +11,17 @@ import shutil
 import numpy as np
 print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
-# cols = 360
-# rows = 360
-cols = 1280
-rows = 720
+cols = 222
+rows = 222
+# cols = 1280
+# rows = 720
 # cols = 640
 # rows = 480
 # cols = 640
 # rows = 720
 needVideo = False
-srcRoot = "/media/devin/OpenImage600/tmp/"
-dstRoot = "/media/devin/OpenImage600/tmpJpg/"
+srcRoot = "/home/devin/Downloads/tmp/"
+dstRoot = "/home/devin/Downloads/tmpJpg/"
 suffix = ".nv21"
 lenSuffix = len(suffix)
 fileBytes = cols * rows * 3 / 2

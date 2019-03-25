@@ -57,8 +57,8 @@ def doIt(files, dst, start):
     return frameCnt
 
 ### Params region
-targetL1 = "/home/devin/Downloads/tmp"
-dst = "/home/devin/Downloads/tmp"
+targetL1 = "/home/devin/Downloads/tmp/PosR4/"
+dst = "/home/devin/Downloads/tmp/PosR4/"
 dst = dst + os.path.sep
 startNum = 0
 filesNum = 0
@@ -67,7 +67,7 @@ filesNum = 0
 if os.path.exists(targetL1):
     for rt, dirs, files in os.walk(targetL1):
         for name in files:
-            if name.split('.')[-1] in ["mp4"]:
+            if name.split('.')[-1] in ["mp4", "MOV"]:
                 filesNum += 1
                 print(os.path.join(rt, name))
                 tmp = os.path.join(rt, name)

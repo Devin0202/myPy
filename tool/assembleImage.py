@@ -15,13 +15,13 @@ print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
 
 ### Params region
 downSample = 0.2
-srcRoot = "/media/devin/Elements/WM/AllTrainData/30/"
-dstRoot = "/media/devin/Elements/WM/TrainData/30/"
+srcRoot = "/home/devin/Downloads/OilCoverClass/0/"
+dstRoot = "/home/devin/Downloads/OilCoverClass/0New/"
 cnt = 0
 index = 0
 folderLimitNumber = 3000
 targetFolderList = []
-needNum = 1500
+needNum = 2000
 
 ### Job region
 if not os.path.exists(dstRoot):

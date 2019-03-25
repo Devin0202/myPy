@@ -11,7 +11,7 @@ print(sys.version)
 print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
 
 ### Defs region
-def cropResize(fImg, fCropHW, fResizeHW, fCropTL):
+def cropResize(fImg, fCropHW, fResizeWH, fCropTL):
     img = cv2.imread(fImg, cv2.IMREAD_COLOR)
     TL = [0, 0]
     if img is None:
@@ -31,15 +31,15 @@ def cropResize(fImg, fCropHW, fResizeHW, fCropTL):
 
     dstImg = img[TL[0] : fCropHW[0] + TL[0] - 1, \
                 TL[1] : fCropHW[1] + TL[1] - 1]
-    dstImg = cv2.resize(dstImg, fResizeHW)
+    dstImg = cv2.resize(dstImg, fResizeWH)
     return dstImg
 
 ### Params region
-srcRoot = "/media/devin/Elements/WM/OriVideo/VID_20181203_153331/"
-dstRoot = "/media/devin/Elements/WM/OriVideo/VID_20181203_153331CS/"
-cropSize = (1000, 1000)
-dstSize = (100, 100)
-cropTL = (0.0, 0.2)
+srcRoot = "/home/devin/Downloads/tmp/PosR4/old/"
+dstRoot = "/home/devin/Downloads/tmp/PosR4/oldCS/"
+cropSize = (500, 300)
+dstSize = (300, 500)
+cropTL = (0.20, 0.38)
 
 if not os.path.exists(dstRoot):
     os.makedirs(dstRoot)
@@ -60,6 +60,13 @@ if os.path.exists(srcRoot):
                     print(dstFolder)
 
                 dstImg = cropResize(absoluteRoute, cropSize, dstSize, cropTL)
+
+                # img = cv2.imread(absoluteRoute, cv2.IMREAD_COLOR)
+                # retval = cv2.getRotationMatrix2D((img.shape[1] / 2, \
+                #     img.shape[0] / 2), 180, 1)
+                # dstImg = cv2.warpAffine(img, retval, (img.shape[1], \
+                #     img.shape[0]))
+
                 if [] != dstImg:
                     dstFolder = dstFolder + os.path.sep
                     cv2.imwrite(os.path.join(dstFolder, name), dstImg)
