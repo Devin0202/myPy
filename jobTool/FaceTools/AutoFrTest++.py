@@ -162,8 +162,11 @@ for obj in objs:
                 dirs.append(i)
             else:
                 tmp = i.split(" ")
-                for j in tmp[: -1]:
-                    dirs.append(j)
+                if 1 == len(tmp):
+                    dirs.append(tmp[0])
+                else:
+                    for j in tmp[: -1]:
+                        dirs.append(j)
     else:
         for rt, folders, files in os.walk(dataSet):
             for i in folders:
