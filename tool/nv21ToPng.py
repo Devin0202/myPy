@@ -31,6 +31,7 @@ fileBytes = cols * rows * 3 / 2
 cvImgSaver = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
 suffixReplace = ".jpg"
 
+prefix = time.strftime("%Y%m%d%H%M", time.localtime())
 index = 0
 dstList = []
 if os.path.exists(srcRoot):
@@ -46,8 +47,9 @@ if os.path.exists(srcRoot):
 
                 imgYuv = np.fromstring(oriData, dtype = np.uint8)
                 imgYuv = np.reshape(imgYuv, (-1, cols))
+                # imgBgr = cv2.cvtColor(imgYuv, cv2.COLOR_YUV2BGR_I420)
                 imgBgr = cv2.cvtColor(imgYuv, cv2.COLOR_YUV2BGR_NV21)
-                store = name.replace(suffix, suffixReplace)
+                store = prefix + name.replace(suffix, suffixReplace)
                 store = os.path.join(rt, store)
                 store = store.replace(srcRoot, dstRoot)
                 storeRoute = os.path.split(store)
