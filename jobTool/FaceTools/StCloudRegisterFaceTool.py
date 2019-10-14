@@ -13,6 +13,8 @@ print(sys.version)
 print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
 
 ### Defs region
+encodingRule = "gbk"
+
 def verifyVersion(serverUrl):
     url = serverUrl + "/verify/version"
     r = requests.get(url)
@@ -93,10 +95,11 @@ def addSingleFace(serverUrl, setID, facePic, isPrintInfo):
     info = {"dbName" : setID, \
             "getFeature" : notGetFeature, \
             "getDetail" : notGetDetail, \
-            "qualityThreshold" : threshold}
+            "qualityThreshold" : threshold, \
+            "payload" : imageName}
 
     outData = {"imageDatas" : (urllib.parse.quote(imageName, \
-        encoding = "utf-8"), open(facePic, "rb"))}
+        encoding=encodingRule, errors="strict"), open(facePic, "rb"))}
 
     r = requests.post(url, params = info, files = outData)
 
@@ -124,7 +127,7 @@ def addFaces(serverUrl, setID, folder, tokenMapping):
                     # print(name)                    
                     print(absoluteRoute)
                     tmpStr = ''
-                    tmpStr = addSingleFace(serverUrl, mSetID, absoluteRoute, False)
+                    tmpStr = addSingleFace(serverUrl, mSetID, absoluteRoute, True)
 
                     if not ('' == tmpStr):
                         cntF += 1
@@ -165,7 +168,7 @@ def searchFace(serverUrl, setID, facePic, isPrintInfo):
         print("searchFace Http status: " + str(r.status_code))
 
     tmpStr = r.text.split("filename\": \"")[-1].split("\", \"")[0]
-    return urllib.parse.unquote(tmpStr, encoding = "utf-8")
+    return urllib.parse.unquote(tmpStr, encoding=encodingRule)
 
 ### Params region
 mServerUrl = "http://192.168.18.193:9001"

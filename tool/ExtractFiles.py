@@ -10,6 +10,7 @@ import time
 import shutil
 ### Definition region(Class, Functions, Constants)
 def doJob(fRootDir, fDstDir):
+    cnt = 0
     rootDir = fRootDir + os.path.sep
     if os.path.exists(rootDir):
         pass
@@ -30,11 +31,12 @@ def doJob(fRootDir, fDstDir):
 
             new = rt.split(os.path.sep)[-1]
             # print(new)
-            new = dstDir + new + '-' + i
+            new = dstDir + new + ' ' + i
             print(new)
             print()
             shutil.copyfile(old, new)
-    return
+            cnt += 1
+    return cnt
 
 if "__main__" == __name__:
     print(sys.version)
@@ -44,7 +46,7 @@ if "__main__" == __name__:
     cSrcDir = "/home/devin/Downloads/tmp/hiscene_inspect/"
     cDstDir = "/home/devin/Downloads/tmp/Extract/ChangeIt/"
 ### Job region
-    doJob(cSrcDir, cDstDir)
+    print(doJob(cSrcDir, cDstDir))
 
     print(os.linesep)
     print(time.strftime(timeStampFormat, time.localtime()))
