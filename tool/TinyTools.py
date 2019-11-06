@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+"""Brief
 Language:
 Goal:
 PS:
@@ -11,7 +11,9 @@ import timeit
 import re
 import concurrent.futures
 
-### Common utilities
+"""
+Common utilities
+"""
 def safeDirectory(fDir):
     if str == type(fDir):
         safeDir = re.sub(os.path.sep + "{2,}", os.path.sep, fDir)
@@ -76,7 +78,18 @@ def concurrentWork(fMaxload, fFn, *fArgs, \
         results = list(map(fFn, *fArgs))
     return results
 
-### Definition region(Class, Functions, Constants)
+"""Definition region
+
+Class:
+
+Constants:
+
+Functions:
+1. Traversing files
+2. Rename by serials
+3. Images flipping horizontally
+4. Images padding
+"""
 def traversFilesInDir(fSrcRoot, fBlackList=[]):
     rtv = []
     srcRoot = safeDirectory(fSrcRoot)
@@ -105,7 +118,7 @@ def renameByNum(fOlds, fStart=0):
         cnt += 1
     return
 
-from skimage import io
+from skimage import io, util, transform
 def saveHorizontalFlip(fImgs, fDstFold=None):
     if fDstFold:
         dst = makeAbsDirs(fDstFold, fExistencePermitted=False)
@@ -129,22 +142,81 @@ def saveHorizontalFlip(fImgs, fDstFold=None):
         io.imsave(new, image)
     return
 
+def savePadding(fImgs, fTargetH, fTargetW, fDstFold=None):
+    if fDstFold:
+        dst = makeAbsDirs(fDstFold, fExistencePermitted=False)
+    else:
+        dst = None
+
+    for i in fImgs:
+        image = io.imread(i)
+        hDiff = int(fTargetH - image.shape[0])
+        wDiff = int(fTargetW - image.shape[1])
+
+        if hDiff < 0 or wDiff < 0:
+            image = transform.resize(image, (fTargetH, fTargetW))
+        else:
+            hPadding = (hDiff // 2, hDiff - hDiff // 2)
+            wPadding = (wDiff // 2, wDiff - wDiff // 2)
+            image = util.pad(image, ((0, 0), wPadding, (0, 0)), \
+                            mode = 'symmetric')
+            image = util.pad(image, (hPadding, (0, 0), (0, 0)), \
+                            mode = 'symmetric')
+
+        lastSep = i.rfind(os.sep)
+        if dst:
+            first = dst
+        else:
+            first = i[:lastSep + 1]
+
+        second = i[lastSep + 1:]
+        second = second.split('.')
+        second[0] = "pad" + second[0]
+        new = first + ".".join(second)
+        io.imsave(new, image)
+    return
+
+import cv2
+import numpy as np
+def makeVideo(fImgs, fTargetH, fTargetW, fDstFold):
+    dst = makeAbsDirs(fDstFold, fExistencePermitted=False)
+    videoWriter = cv2.VideoWriter(dst + "video.avi", \
+                cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), \
+                15, (fTargetW, fTargetH))
+
+    rgb_color = (0, 0, 0)
+    color = tuple(reversed(rgb_color))
+    matBlack = np.zeros((fTargetH, fTargetW, 3), np.uint8)
+    matBlack[:] = color
+    imgPalm = cv2.imread("/home/devin/MyData/Gesture/Classify-backlight/7/201910241056201910241049653.jpg")
+    for i in fImgs:
+        imgBgr = cv2.imread(i)
+        videoWriter.write(matBlack)
+        videoWriter.write(imgPalm)
+        videoWriter.write(imgBgr)
+    videoWriter.release()
+
+    return
+
+
 if "__main__" == __name__:
     globalT0 = globalStart()
 ### Parameters region
-    src = "/media/devin/Elements/tmp/GesTrain-bak/0"
-    blacklist = ["/media/devin/Elements/tmp/GesTrain/0", \
-                "/media/devin/Elements/tmp/GesTrain/3", \
-                "/media/devin/Elements/tmp/GesTrain/4", \
-                "/media/devin/Elements/tmp/GesTrain/3l", \
-                "/media/devin/Elements/tmp/GesTrain/4l"]
+    src = "/home/devin/MyData/Gesture/Classify-backlight/7/"
+    blacklist = ["/media/devin/Elements/tmp/GesTrain/test/0"]
 ### Job region
     print("Do something~")
 
     # rtv = traversFilesInDir(src, fBlackList=blacklist)
     # saveHorizontalFlip(rtv)
 
-    rtv = traversFilesInDir(src)
-    renameByNum(rtv)
+    # rtv = traversFilesInDir(src)
+    # savePadding(rtv, 720, 720, fDstFold="/media/devin/Elements/tmp/GesTrain/test/0pad")
+
+    rtv = traversFilesInDir(src, fBlackList=blacklist)
+    makeVideo(rtv, 720, 720, "/media/devin/Elements/tmp/GesTrain/test/video")
+
+    # rtv = traversFilesInDir(src)
+    # renameByNum(rtv, fStart=19000)
 
     globalEnd(globalT0)
