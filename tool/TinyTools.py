@@ -178,9 +178,9 @@ def savePadding(fImgs, fTargetH, fTargetW, fDstFold=None):
 
 import cv2
 import numpy as np
-def makeVideo(fImgs, fTargetH, fTargetW, fDstFold):
-    dst = makeAbsDirs(fDstFold, fExistencePermitted=False)
-    videoWriter = cv2.VideoWriter(dst + "video.avi", \
+def makeVideo(fImgs, fTargetH, fTargetW, fDstFold, fVideoName):
+    dst = makeAbsDirs(fDstFold, fExistencePermitted=True)
+    videoWriter = cv2.VideoWriter(dst + str(fVideoName) + ".avi", \
                 cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), \
                 15, (fTargetW, fTargetH))
 
@@ -188,21 +188,24 @@ def makeVideo(fImgs, fTargetH, fTargetW, fDstFold):
     color = tuple(reversed(rgb_color))
     matBlack = np.zeros((fTargetH, fTargetW, 3), np.uint8)
     matBlack[:] = color
-    imgPalm = cv2.imread("/home/devin/MyData/Gesture/Classify-backlight/7/201910241056201910241049653.jpg")
+    imgPalm = cv2.imread("/media/devin/Elements/tmp/Classify/7/17.jpg")
+
+    """3 frames reserved for palm detection"""
+    videoWriter.write(imgPalm)
+    videoWriter.write(imgPalm)
+    videoWriter.write(imgPalm)
+
     for i in fImgs:
         imgBgr = cv2.imread(i)
-        videoWriter.write(matBlack)
-        videoWriter.write(imgPalm)
         videoWriter.write(imgBgr)
     videoWriter.release()
-
     return
 
 
 if "__main__" == __name__:
     globalT0 = globalStart()
 ### Parameters region
-    src = "/home/devin/MyData/Gesture/Classify-backlight/7/"
+    src = "/media/devin/Elements/tmp/Classify/10/"
     blacklist = ["/media/devin/Elements/tmp/GesTrain/test/0"]
 ### Job region
     print("Do something~")
@@ -214,7 +217,7 @@ if "__main__" == __name__:
     # savePadding(rtv, 720, 720, fDstFold="/media/devin/Elements/tmp/GesTrain/test/0pad")
 
     rtv = traversFilesInDir(src, fBlackList=blacklist)
-    makeVideo(rtv, 720, 720, "/media/devin/Elements/tmp/GesTrain/test/video")
+    makeVideo(rtv, 720, 720, "/media/devin/Elements/tmp/videoForkeyPoints", 10)
 
     # rtv = traversFilesInDir(src)
     # renameByNum(rtv, fStart=19000)

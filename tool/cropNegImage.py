@@ -1,45 +1,155 @@
+# -*- coding: utf-8 -*-
+"""
+Language:
+Goal:
+PS:
+"""
+import sys
 import os
 import time
+import timeit
+import re
+import concurrent.futures
+
+### Common utilities
+def safeDirectory(fDir):
+    if str == type(fDir):
+        safeDir = re.sub(os.path.sep + "{2,}", os.path.sep, fDir)
+        if os.path.sep == safeDir[-1]:
+            pass
+        else:
+            safeDir += os.path.sep
+    else:
+        print("Error type of input!!!")
+        sys.exit(0)
+    return safeDir
+
+def makeAbsDirs(fDir, fExistencePermitted = True):
+    safeDir = safeDirectory(fDir)
+    if os.path.isabs(safeDir):
+        try:
+            if not os.path.exists(safeDir):
+                os.makedirs(safeDir)
+            else:
+                if not fExistencePermitted:
+                    print("The folder had been existed!!!")
+                    sys.exit(0)
+                else:
+                    pass
+        except Exception as e:
+            print(e)
+            sys.exit(0)
+        else:
+            print("Create: " + safeDir + "    OK")
+            return safeDir
+    else:
+        print("Please use absolute path!!!")
+        sys.exit(0)
+
+def globalStart():
+    print("LocalSystem: " + os.name)
+    print("Python Ver: " + sys.version)
+    timeStampFormat = "%Y-%m-%d %H:%M:%S"
+    print(time.strftime(timeStampFormat, time.localtime()))
+    globalT = timeit.default_timer()
+    print()
+    return globalT
+
+def globalEnd(fGlobalT):
+    timeStampFormat = "%Y-%m-%d %H:%M:%S"
+    globalElapsed = (timeit.default_timer() - fGlobalT) / 60
+    print()
+    print(time.strftime(timeStampFormat, time.localtime()))
+    print("Finished in {:.2f}m".format(globalElapsed))
+
+def concurrentWork(fMaxload, fFn, *fArgs, \
+    isProcess = True, isConcurrent = True):
+    if isConcurrent:
+        if isProcess:
+            executor = \
+            concurrent.futures.ProcessPoolExecutor(max_workers = fMaxload)
+        else:
+            executor = \
+            concurrent.futures.ThreadPoolExecutor(max_workers = fMaxload)
+        results = list(executor.map(fFn, *fArgs))
+    else:
+        results = list(map(fFn, *fArgs))
+    return results
+
+### Definition region(Class, Functions, Constants)
+def traversFilesInDir(fSrcRoot, fBlackList=[]):
+    rtv = []
+    srcRoot = safeDirectory(fSrcRoot)
+    if os.path.exists(srcRoot):
+        for rt, dirs, files in os.walk(srcRoot):
+            for name in files:
+                if rt in fBlackList:
+                    continue
+                else:
+                    rtv.append(os.path.join(rt, name))
+    else:
+        print("Please use correct path!!!")
+        sys.exit(0)
+    return rtv
+
+from skimage import io
+import math
 import random
-import cv2
+def getNegs(fImgs, fDstFold, fNegNum, fRadiusRatio):
+    if fDstFold:
+        dst = makeAbsDirs(fDstFold, fExistencePermitted=True)
+    else:
+        dst = None
 
-srcRoot = "/media/devin/Elements1/usbFolder/"
-dstRoot = "/media/devin/Elements1/111/"
-dstRow = 54
-dstCol = 36
+    for j in range(fNegNum):
+        for i in fImgs:
+            image = io.imread(i)
+            # image.shape   HWC
+            print(str(image.shape) + '\t' + i.split(os.sep)[-1])
+            mn = min(image.shape[0], image.shape[1])
+            mxR = mn * fRadiusRatio
+            rd = random.uniform(0, 2 * math.pi)
+            anchorX = int(image.shape[1] / 2 + mxR * math.cos(rd))
+            anchorY = int(image.shape[0] / 2 + mxR * math.sin(rd))
 
-print time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-if not os.path.exists(dstRoot):
-    os.makedirs(dstRoot)
+            rd = random.randint(0, 3)
+            if 0 == rd:
+                length = min(anchorX, anchorY)
+                image = image[anchorY - length:anchorY, \
+                                anchorX - length:anchorX, :]
+            elif 1 == rd:
+                length = min(image.shape[1] - anchorX, anchorY)
+                image = image[anchorY - length:anchorY, \
+                                anchorX:anchorX + length, :]
+            elif 2 == rd:
+                length = min(anchorX, image.shape[0] - anchorY)
+                image = image[anchorY:anchorY + length, \
+                                anchorX - length:anchorX, :]
+            else:
+                length = min(image.shape[1] - anchorX, image.shape[0] - anchorY)
+                image = image[anchorY:anchorY + length, \
+                                anchorX:anchorX + length, :]
 
-downSample = 0.33
-cnt = 0
-if os.path.exists(srcRoot):
-    for rt, dirs, files in os.walk(srcRoot):
-        for name in files:
-            if -1 != name.find(".jpg") or -1 != name.find(".JPG") \
-                or -1 != name.find(".png") or -1 != name.find(".PNG"):
-                absoluteRoute = os.path.join(rt, name)
-                print absoluteRoute
-                img = cv2.imread(absoluteRoute, cv2.IMREAD_COLOR)
-                if img is None:
-                    continue
-                if img.shape[0] < dstRow:
-                    continue
-                if img.shape[1] < dstCol:
-                    continue
+            lastSep = i.rfind(os.sep)
+            first = dst
+            second = i[lastSep + 1:]
+            second = second.split('.')
+            second[0] = str(j) + "N" + second[0]
+            new = first + ".".join(second)
+            io.imsave(new, image)
+    return
 
-                dstFolder = rt.replace(srcRoot, dstRoot)
-                if not os.path.exists(dstFolder):
-                    os.makedirs(dstFolder)
-                    print dstFolder
-                dstImg = img[(img.shape[0] - dstRow) / 2 : (img.shape[0] - dstRow) / 2 + dstRow, \
-                                (img.shape[1] - dstCol) / 2 : (img.shape[1] - dstCol) / 2 + dstCol]
-                cv2.imwrite(os.path.join(dstFolder, name), dstImg)
-                cnt += 1
-else:
-    print("No Source!!!")
+if "__main__" == __name__:
+    globalT0 = globalStart()
+### Parameters region
+    srcs = range(1, 11)
+    src = "/media/devin/Elements/tmp/GesTrain-bak/"
+    dst = "/media/devin/Elements/tmp/test/"
+### Job region
+    print("Do something~")
 
-print os.linesep
-print "Total images: " + str(cnt)
-print time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+    for i in srcs:
+        rtv = traversFilesInDir(src + str(i))
+        getNegs(rtv, dst + str(i), 2, 0.2)
+
+    globalEnd(globalT0)

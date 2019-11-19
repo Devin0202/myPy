@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+"""Brief
 Language:
 Goal:
 PS:
@@ -11,7 +11,14 @@ import timeit
 import re
 import concurrent.futures
 
-### Common utilities
+"""Common utilities
+Functions:
+1. safeDirectory
+2. makeAbsDirs
+3. globalStart
+4. globalEnd
+5. traversFilesInDir
+"""
 def safeDirectory(fDir):
     if str == type(fDir):
         safeDir = re.sub(os.path.sep + "{2,}", os.path.sep, fDir)
@@ -76,7 +83,29 @@ def concurrentWork(fMaxload, fFn, *fArgs, \
         results = list(map(fFn, *fArgs))
     return results
 
-### Definition region(Class, Functions, Constants)
+def traversFilesInDir(fSrcRoot, fBlackList=[]):
+    rtv = []
+    srcRoot = safeDirectory(fSrcRoot)
+    if os.path.exists(srcRoot):
+        for rt, dirs, files in os.walk(srcRoot):
+            for name in files:
+                if rt in fBlackList:
+                    continue
+                else:
+                    rtv.append(os.path.join(rt, name))
+    else:
+        print("Please use correct path!!!")
+        sys.exit(0)
+    return rtv
+"""Definition region
+
+Class:
+
+Constants:
+
+Functions:
+1. 
+"""
 
 if "__main__" == __name__:
     globalT0 = globalStart()
