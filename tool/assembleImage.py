@@ -80,7 +80,8 @@ def doJob(fDstRoot, fSrcRoot, fFolderLimitNumber, fDownSample, fRepeatSet):
                             print(targetFolder)
                             os.makedirs(targetFolder)
                             targetFolderList.append(targetFolder)
-                        shutil.copyfile(absoluteRoute, targetFolder + name)
+                        shutil.copyfile(absoluteRoute, targetFolder \
+                                + str(index) + '_' + name)
                         index += 1
                     else:
                         continue
@@ -90,7 +91,8 @@ def doJob(fDstRoot, fSrcRoot, fFolderLimitNumber, fDownSample, fRepeatSet):
                             print(targetFolder)
                             os.makedirs(targetFolder)
                             targetFolderList.append(targetFolder)
-                        shutil.copyfile(absoluteRoute, targetFolder + name)
+                        shutil.copyfile(absoluteRoute, targetFolder \
+                                + str(index) + '_' + name)
                         index += 1
                     else:
                         continue

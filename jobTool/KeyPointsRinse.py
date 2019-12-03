@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """Brief
-Language:
-Goal:
-PS:
+Language: python3
+Goal: 手势关节点-手势语义 数据清洗工具
+PS: KeyPointsRinse.py支持按键操作
+    'd'            表示当前数据异常, 进行剔除
+    '<-'左方向键    回退至前一份数据
+    其余按键        表示当前数据正常, 保留
 """
 import sys
 import os
