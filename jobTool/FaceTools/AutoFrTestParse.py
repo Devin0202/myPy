@@ -374,7 +374,7 @@ class CaseInfo:
             writeExcel.append(str(self.parseMaxCost))
             print("parseMaxCost: " + str(self.parseMaxCost))
 
-        if "NA" != self.loadAvgCost and 0 != self.loadAvgCost:
+        if "NA" != self.loadAvgCost:
             tmpI = int(self.loadAvgCost)
         else:
             tmpI = "NA"
@@ -570,10 +570,11 @@ def getCaseDict(myDict, mNameCaseDict, mOriList, iCaseFfoTsDict):
                     tmp0S = cID + "/" + iCaseFfoTsDict[key]
 
             for line in mOriList:
-                if ((-1 != line.find("quitCost: ")) and (-1 != line.find(cID))):
+                if ((-1 != line.find("QuitCost: ")) and (-1 != line.find(cID))):
                     tmpSplits = line.split(" arrayRemain: ")
-                    tmp1S = tmpSplits[0].split("quitCost: ")[1]
-                    tmp2S = tmpSplits[1]
+                    tmp1S = tmpSplits[0].split("QuitCost: ")[1].split("ms")[0]
+                    if 2 == len(tmpSplits):
+                        tmp2S = tmpSplits[1]
 
                 if ((-1 != line.find("Running remains: ")) and (-1 != line.find(cID))):
                     if tmp1I < int(line.split("frameID: ")[1].split()[0]):
@@ -593,8 +594,10 @@ def getCaseDict(myDict, mNameCaseDict, mOriList, iCaseFfoTsDict):
                 tmp0I = tmpImin
 
             if None == tmp3S:
-                print("Old log~")
-            elif int(tmp3S) < int(tmp2S):
+                tmp3S = 0
+            if None == tmp2S:
+                tmp2S = 0
+            if int(tmp3S) < int(tmp2S):
                 tmp2S = tmp3S
 
             print(tmp0I)
@@ -731,10 +734,10 @@ def concurrentGroupJob(iObjMarks, iOriList, iStr):
                     iObj.setEP(epTime, rs, confidence)
                     iObj.setET(epTime, "recoParse")
                     iObj.setRecgValid(True)
-                elif (-1 != mLine.find("status: loadingStart")):
+                elif (-1 != mLine.find("status: loading")):
                     stTime = int(mLine.split("|D||")[0])
                     iObj.setST(stTime)
-                    iObj.setET(stTime, "loadingStart")
+                    iObj.setET(stTime, "loading")
                 elif (-1 != mLine.find("status: detectStart")):
                     sdTime = int(mLine.split("|D||")[0])
                     iObj.setSD(sdTime)
@@ -775,10 +778,10 @@ def concurrentJob(iObj, iOriList, iMark, iStr):
                 iObj.setEP(epTime, rs, confidence)
                 iObj.setET(epTime, "recoParse")
                 iObj.setRecgValid(True)
-            elif (-1 != mLine.find("status: loadingStart")):
+            elif (-1 != mLine.find("status: loading")):
                 stTime = int(mLine.split("|D||")[0])
                 iObj.setST(stTime)
-                iObj.setET(stTime, "loadingStart")
+                iObj.setET(stTime, "loading")
             elif (-1 != mLine.find("status: detectStart")):
                 sdTime = int(mLine.split("|D||")[0])
                 iObj.setSD(sdTime)
@@ -810,11 +813,11 @@ if __name__ == '__main__':
     if False:
         xlsFileR, xlsFileW, srcRoot, checkList = parseOpt()
     else:
-        xlsFileR = "/home/devin/Desktop/G200/FrSet2018.xlsx"
-        xlsFileW = "/home/devin/Desktop/G200/RoiChange/bigger2/newInterimData.xlsx"
-        srcRoot = "/home/devin/Desktop/G200/RoiChange/bigger2/"
-        checkList = ["zhuyawen", "xinglj", "baoyuandong", "daiyi", \
-            "peiyi", "sunhaiyan"]
+        xlsFileR = "/home/devin/Downloads/tmp/FrSet2018.xlsx"
+        xlsFileW = "/home/devin/Downloads/tmp/newInterimData.xlsx"
+        srcRoot = "/home/devin/Downloads/tmp/"
+        checkList = ["baoyuandong", "daiyi", "peiyi", "sunhaiyan", "xinglj", \
+            "zhuyawen", "guangming", "yanchangjian", "yukeke"]
 
     futuresList = []
     executor = ProcessPoolExecutor(max_workers = 36)
@@ -906,14 +909,32 @@ if __name__ == '__main__':
         oriList = []
         infoDict = {}
         caseDict = {}
+        tmpDict = {}
         if os.path.exists(singleRoot):
+            tmpDict = {}
             for rt, dirs, files in os.walk(singleRoot):
                 for name in files:
                     print("ORI: " + os.path.join(rt, name))
+                    tmpKey = rt.split(os.sep)[-1]
+                    with open(os.path.join(rt, name), 'r', encoding = 'UTF-8') as f:
+                        tmpList = f.readlines()
+                    
+                    for line in tmpList:
+                        if -1 != line.find("file: "):
+                            tmpDict[tmpKey] = line.split("/")[3]
+                            break
+
+            for rt, dirs, files in os.walk(singleRoot):
+                for name in files:
+                    tmpKey = rt.split(os.sep)[-1]
                     with open(os.path.join(rt, name), 'r', encoding = 'UTF-8') as f:
                         tmpList = f.readlines()
                     for line in tmpList:
+                        if -1 != line.find("QuitCost: "):
+                            tmp = line.split("QuitCost: ")
+                            line = tmp[0] + tmpDict[tmpKey] + " " + "QuitCost: " + tmp[1]
                         oriList.append(line)
+
             for line in oriList:
                 if -1 != line.find("file: "):
                     tmpStr = line.split("file: ")[1].split(" status:")[0]
@@ -946,7 +967,7 @@ if __name__ == '__main__':
             obj = infoDict.get(it)
 
             objMarkList.append((obj, it))
-
+            """Parallel process"""
             (d, m) = divmod(index, groupsize)
             if 0 == m:
                 future = executor.submit(concurrentGroupJob, objMarkList, oriList, tmpS)
@@ -960,6 +981,11 @@ if __name__ == '__main__':
             resList = future.result()
             for tmpT in resList:
                 infoDict[tmpT[0]] = tmpT[1]
+
+        """Serial process"""
+        # resList = concurrentGroupJob(objMarkList, oriList, tmpS)
+        # for tmpT in resList:
+        #     infoDict[tmpT[0]] = tmpT[1]
 
         midTime = time.time()
         strMidTime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())

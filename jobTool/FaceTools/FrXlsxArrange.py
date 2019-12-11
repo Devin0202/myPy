@@ -72,15 +72,17 @@ if False:
     xlsFileR, xlsFileW, hint = parseOpt()
 else:
     indexSheet = "caseIndex"
-    xlsFileR = "/home/devin/Desktop/TestResultXlsx/InterimData.xlsx"
-    xlsFileW = "/home/devin/Desktop/TestResultXlsx/AllData.xlsx"
+    xlsFileR = "/home/devin/Downloads/tmp/newInterimData.xlsx"
+    xlsFileW = "/home/devin/Downloads/tmp/SimpleData.xlsx"
     hint = ["3m", "正", "普"]
+    hint = []
 
-needRowsInfo = ["视频片段编号", "检测", "识别正确", "识别有效率", "首识别-首检测 时差", \
-"首检测-人出现 时差", "响应时间(ms)", "2秒内正确识别率", "5秒内正确识别率", \
-"15秒内正确识别率", "识别正确-人出现 最短耗时"]
-needRows = [1, 4, 23, 7, 22, 21, 20, 27, 28, 29, 30]
-individuleStartRow = 34
+needRowsInfo = ["视频片段编号", "检测", "识别正确", "识别有效率", \
+                "首识别-首检测 时差", "首检测-人出现 时差", "响应时间(ms)", \
+                "2秒内正确识别率", "5秒内正确识别率", "15秒内正确识别率", \
+                "识别正确-人出现 最短耗时", "单帧检测平均耗时"]
+needRows = [1, 4, 23, 7, 22, 21, 20, 27, 28, 29, 30, 15]
+individuleStartRow = 35
 
 ### Job region
 matchRows = []
@@ -176,7 +178,7 @@ cMax = wws.max_column + 1
 wws.cell(1, cMax).value = "Average"
 wws.cell(1, cMax + 2).value = "NA rate"
 
-for r in range(2, 13):
+for r in range(2, 14):
     totalF = 0.0
     cntNA = 0
     cnt = 0
@@ -188,7 +190,10 @@ for r in range(2, 13):
         else:
             cnt += 1
             totalF += float(tmp)
-    wws.cell(r, cMax).value = round(totalF / cnt, 2)
+    if 0 == cnt:
+        wws.cell(r, cMax).value = "NA"
+    else:
+        wws.cell(r, cMax).value = round(totalF / cnt, 2)
     wws.cell(r, cMax + 2).value = round(cntNA / (cntNA + cnt), 2)
 
 wws.cell(1, cMax + 1).value = "Min"

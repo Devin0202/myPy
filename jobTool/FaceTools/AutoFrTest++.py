@@ -115,9 +115,11 @@ def safeExecute(fCmd, fCmdInfo, fWaitTime, fCmdTimeOut = 90):
     return output
 
 ### Params region
-cAdbDevices = " -s 92d426e9 "
-dataFolder = "/storage/C03C-16FC/FaceCases/"
-objs = ["baoyuandong", "daiyi", "peiyi", "sunhaiyan", "xinglj", "zhuyawen"]
+cAdbDevices = " -s 9d33da78 "
+dataFolder = "/storage/65F3-3762/smallFaceSet/"
+objs = ["baoyuandong", "daiyi", "peiyi", "sunhaiyan", "xinglj", "zhuyawen", \
+        "guangming", "yanchangjian", "yukeke"]
+ 
 cDataDst = "/sdcard/TestData"
 cLogDst = "/sdcard/TestLog"
 cAppID = "com.megvii.test"
@@ -125,9 +127,9 @@ cAppObj = "com.megvii.test/com.facepp.demo.LoadingActivity"
 cLocalResults = "/home/devin/Downloads/tmp/"
 recordLogFolder = "/home/devin/Downloads/tmp"
 isDos = False
-isSDmode = False
+isSDmode = True
 isFullCase = False
-isDirect = True
+isDirect = False
 
 folderDoneList = \
 []
@@ -201,7 +203,7 @@ for obj in objs:
                     timeoutLimit = 0
                     break
                 else:
-                    avgFreq = 0;
+                    avgFreq = 0
                     localCnt += 1
                     logWriter.printLog("App running: " + str(output))
                     cmd = "adb" + cAdbDevices + "shell input keyevent 224"
@@ -212,19 +214,35 @@ for obj in objs:
                     cmd = "adb" + cAdbDevices + "shell cat " + prefix + "cpu0" \
                             + suffix
                     output = safeExecute(cmd, "get_cur_freq0: ", 2)
-                    avgFreq += int(output)
+                    try:
+                        avgFreq += int(output)
+                    except:
+                        avgFreq += 0
+                        logWriter.printLog("cpuinfo_cur_freq0 missing")
                     cmd = "adb" + cAdbDevices + "shell cat " + prefix + "cpu1" \
                             + suffix
                     output = safeExecute(cmd, "get_cur_freq1: ", 2)
-                    avgFreq += int(output)
+                    try:
+                        avgFreq += int(output)
+                    except:
+                        avgFreq += 0
+                        logWriter.printLog("cpuinfo_cur_freq1 missing")
                     cmd = "adb" + cAdbDevices + "shell cat " + prefix + "cpu2" \
                             + suffix
                     output = safeExecute(cmd, "get_cur_freq2: ", 2)
-                    avgFreq += int(output)
+                    try:
+                        avgFreq += int(output)
+                    except:
+                        avgFreq += 0
+                        logWriter.printLog("cpuinfo_cur_freq2 missing")
                     cmd = "adb" + cAdbDevices + "shell cat " + prefix + "cpu3" \
                             + suffix
                     output = safeExecute(cmd, "get_cur_freq3: ", 2)
-                    avgFreq += int(output)
+                    try:
+                        avgFreq += int(output)
+                    except:
+                        avgFreq += 0
+                        logWriter.printLog("cpuinfo_cur_freq3 missing")
 
                     logWriter.printLog("cpuinfo_cur_freq: " + str(avgFreq / 4))
                     cmd = "adb" + cAdbDevices + "shell cat /sys/devices/system/cpu/online"
@@ -236,7 +254,7 @@ for obj in objs:
                     if (90 < localCnt):
                         logWriter.printLog("App timeout: " + name)
                         timeoutLimit += 1
-                        break;
+                        break
                     else:
                         pass
 
