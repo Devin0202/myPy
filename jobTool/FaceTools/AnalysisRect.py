@@ -180,8 +180,8 @@ if __name__ == '__main__':
         oriData = None
         tmpList = []
         rectsMap = {}
-        dataSet = dataFolder + obj + "/" + level3Folder + "/"
-        logSet = logFolder + obj + "/"
+        dataSet = dataFolder + obj + os.sep + level3Folder + os.sep
+        logSet = logFolder + obj + os.sep + "TestLog" + os.sep
         for rt, dirs, files in os.walk(logSet):
             for name in files:
                 # print(name)

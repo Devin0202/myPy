@@ -593,6 +593,8 @@ def getCaseDict(myDict, mNameCaseDict, mOriList, iCaseFfoTsDict):
             if None == tmp0I:
                 tmp0I = tmpImin
 
+            if None == tmp1S:
+                tmp1S = -1
             if None == tmp3S:
                 tmp3S = 0
             if None == tmp2S:
