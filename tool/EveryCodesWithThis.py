@@ -21,11 +21,8 @@ Functions:
 """
 def safeDirectory(fDir):
     if str == type(fDir):
-        safeDir = re.sub(os.path.sep + "{2,}", os.path.sep, fDir)
-        if os.path.sep == safeDir[-1]:
-            pass
-        else:
-            safeDir += os.path.sep
+        safeDir = os.path.normpath(fDir)
+        safeDir += os.path.sep
     else:
         print("Error type of input!!!")
         sys.exit(0)
