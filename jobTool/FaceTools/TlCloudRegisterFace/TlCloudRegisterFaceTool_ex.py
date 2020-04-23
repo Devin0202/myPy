@@ -14,6 +14,7 @@ import random
 from urllib3 import encode_multipart_formdata
 import openpyxl
 from PIL import Image
+import shutil
 
 print(sys.version)
 print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()))
@@ -147,8 +148,7 @@ def addSingleFaceHiscene(serverUrl: str, facePic: str, cookies, parseStr=None) -
         categoryID = "上海化学工业园"
         cardId = os.path.basename(facePic) + ' ' + time.strftime('%d-%H:%M:%S', time.localtime())
         sexID = "Unknown"
-        enterprise = "b4502c76da69fc1505010001"
-        # enterprise = "b542df6bf2c7fb1505010001"
+        enterprise = gEnterprise
 
     url = serverUrl + "/manage/faces/add?etpid=" + enterprise
     header = {"Content-Type":"multipart/form-data"}
@@ -185,9 +185,18 @@ def addSingleFaceHiscene(serverUrl: str, facePic: str, cookies, parseStr=None) -
  
     # print(r.text)
     if -1 != r.text.find("入库失败"):
-        errorList.append("入库失败: " +imageName + '\t' + facePic)
+        errorList.append("入库失败: " + imageName + '\t' + facePic)
     
-    print("File: " + facePic)
+    if not searchFace(gServerUrlExt, gToken, gDefaultSetName, facePic, 0.95, 1):
+        errorList.append("入库失败: " + imageName + '\t' + facePic)
+
+    # if "202B017740.jpg" in facePic:
+    #     global trig
+    #     trig = True
+    if trig:
+        print("File: " + facePic)
+        # target = facePic.replace("/017/", "/017ex/")
+        # shutil.copyfile(facePic, target)
     return
 
 def addSingleFace(serverUrl: str, fToken: str, fSetId: str, \
@@ -347,7 +356,12 @@ def searchFace(serverUrl: str, fToken: str, fSetId: str, \
 
     text = json.dumps(text, ensure_ascii=False, sort_keys=True, \
                 indent=4, separators=(',', ': '))
-    print(text)
+    # print(text)
+
+    if -1 != text.find("\"success\": false"):
+        return False
+    else:
+        return True
 
 def delSingleFace(serverUrl: str, fToken: str, faceID: str) -> str:
     url = serverUrl + "/static-face/api/external/v1/face/" + str(faceID)
@@ -364,24 +378,29 @@ def delSingleFace(serverUrl: str, fToken: str, faceID: str) -> str:
     print(text)
 
 ### Params region
+trig = False
 """Important!!!"""
-defaultSetName = "test0313"
+defaultSetName = "test0423"
 
 mServerUrlExt = "https://tunicorn.aryun.com"
 mServerUrlIner = "http://61.159.136.195:8092"
 
-excelLoc = "/home/devin/Downloads/tmp/index.xlsx"
+excelLoc = "/media/devin/OpenImage600/tmp/index.xlsx"
 
-srcRoot = "//media/devin/DL01/20200315_result/"
+srcRoot = "/media/devin/OpenImage600/tmp/20200316_result/"
 # srcRoot = "C:/Users/user/Desktop/1111/test/rlnew/"
 
 dst = "/home/devin/Desktop/"
 # dst = "C:/Users/user/Desktop/1111/"
 
-mTokenMapping = dst + defaultSetName + "-Tunicorn-FaceMap11-20.txt"
+mTokenMapping = dst + defaultSetName + "-Tunicorn-FaceRecord.txt"
 
 ### Job region
-# token = logIn(mServerUrlExt)
+gServerUrlExt = "http://112.65.179.30:8002"
+gToken = logIn(gServerUrlExt)
+
+gDefaultSetName = "7"
+gEnterprise = "12bce1f5ce1b081605010001"
 
 # delFaceSet(mServerUrlExt, token, defaultSetName)
 # createFaceSet(mServerUrlExt, token, fSetName=defaultSetName)
